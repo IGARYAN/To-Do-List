@@ -1,12 +1,3 @@
-<!--
-  Главная страница приложения - список задач
-  Основные функции:
-  - Отображение задач по категориям (просроченные, сегодня, будущие, выполненные)
-  - Управление задачами (добавление, редактирование, удаление, переключение статуса)
-  - Настройки приложения
-  - Автоматическое удаление старых выполненных задач
--->
-
 <script lang="ts">
   // Импорты компонентов
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
@@ -18,10 +9,11 @@
   import { tasksStore, settingsStore } from "$lib/stores/app-store"; // Хранилища состояний
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import type { Task, AppSettings } from "$lib/types/task"; // Типы данных
-  import { Button } from "$lib/components/ui/button"; // Кнопки UI
+  import { buttonVariants } from "$lib/components/ui/button"; // Кнопки UI
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
   import { onMount } from "svelte"; // Хук жизненного цикла
-  import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { getCurrentWindow } from "@tauri-apps/api/window";
   import {
     Card,
     CardContent,
@@ -35,7 +27,8 @@
     Calendar,
     Clock,
     ArrowRight,
-    CircleCheckBig, Pin
+    CircleCheckBig,
+    Pin,
   } from "lucide-svelte"; // Иконки
 
   /*
@@ -82,12 +75,12 @@
     });
 
     const unsubscribeSettings = settingsStore.subscribe(async (value) => {
-    settings = value;
+      settings = value;
 
-    // Сразу применяем состояние окна при изменении настроек
-    const win = await getCurrentWindow();
-    await win.setAlwaysOnTop(value.alwaysOnTop);
-  });
+      // Сразу применяем состояние окна при изменении настроек
+      const win = await getCurrentWindow();
+      await win.setAlwaysOnTop(value.alwaysOnTop);
+    });
 
     // Ставим таймер до полуночи
     let midnightTimerId = setTimeout(() => {
@@ -391,21 +384,37 @@
       <div class="flex items-center gap-2">
         <AlwaysOnTop />
         <ThemeToggle />
-        <Button
-          variant="outline"
-          size="icon"
-          onclick={() => (isSettingsModalOpen = true)}
-          class="transition-all duration-200"
-        >
-          <Settings class="h-4 w-4" />
-        </Button>
-        <Button
-          onclick={() => (isTaskModalOpen = true)}
-          class="transition-all duration-200"
-        >
-          <Plus class="h-4 w-4" />
-          Добавить
-        </Button>
+
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => (isSettingsModalOpen = true)}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
+            >
+              <Settings class="h-4 w-4" />
+            </Tooltip.Trigger>
+
+            <Tooltip.Content>
+              <p>Настройки</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => (isTaskModalOpen = true)}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "default" })}`}
+            >
+              <Plus class="h-4 w-4" />
+              Добавить
+            </Tooltip.Trigger>
+
+            <Tooltip.Content>
+              <p>Добавить новую задачу</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       </div>
     </div>
 

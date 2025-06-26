@@ -1,31 +1,25 @@
 <script lang="ts">
     import { getCurrentWindow } from "@tauri-apps/api/window";
-    import { Button } from "$lib/components/ui/button";
+    import { buttonVariants } from "$lib/components/ui/button";
     import { Pin, PinOff } from "lucide-svelte";
     import { settingsStore } from "$lib/stores/app-store";
     import { toastStore } from "$lib/stores/toast-store";
+    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
-    let settings = $state($settingsStore);
-
-    // Эффект для применения "поверх всех окон" (правильный синтаксис)
-    // $effect(() => {
-    //     (async () => {
-    //         const win = await getCurrentWindow();
-    //         await win.setAlwaysOnTop(settings.alwaysOnTop);
-    //     })();
-    // });
+    $effect(() => {
+        (async () => {
+            const win = await getCurrentWindow();
+            await win.setAlwaysOnTop($settingsStore.alwaysOnTop);
+        })();
+    });
 
     async function toggleAlwaysOnTop() {
-        const newState = !settings.alwaysOnTop;
+        const newState = !$settingsStore.alwaysOnTop;
 
-        // Сохраняем в store
         settingsStore.update((current) => ({
             ...current,
             alwaysOnTop: newState,
         }));
-
-        const win = await getCurrentWindow();
-        await win.setAlwaysOnTop(newState);
 
         toastStore.add({
             title: newState
@@ -39,15 +33,30 @@
     }
 </script>
 
-<Button
-    variant={settings.alwaysOnTop ? "default" : "outline"}
-    size="icon"
-    onclick={toggleAlwaysOnTop}
-    class="transition-all duration-300"
->
-    {#if settings.alwaysOnTop}
-        <Pin class="h-4 w-4" />
-    {:else}
-        <PinOff class="h-4 w-4" />
-    {/if}
-</Button>
+<Tooltip.Provider delayDuration={1000}>
+    <Tooltip.Root>
+        <Tooltip.Trigger
+            onclick={toggleAlwaysOnTop}
+            class={`transition-all duration-300 ${
+                $settingsStore.alwaysOnTop
+                    ? buttonVariants({ variant: "default", size: "icon" })
+                    : buttonVariants({ variant: "outline", size: "icon" })
+            }`}
+        >
+            {#if $settingsStore.alwaysOnTop}
+                <PinOff class="h-4 w-4" />
+            {:else}
+                <Pin class="h-4 w-4" />
+            {/if}
+        </Tooltip.Trigger>
+        <Tooltip.Content side="top">
+            <p>
+                {#if $settingsStore.alwaysOnTop}
+                    Отключить «Всегда поверх всех окон»
+                {:else}
+                    Включить «Всегда поверх всех окон»
+                {/if}
+            </p>
+        </Tooltip.Content>
+    </Tooltip.Root>
+</Tooltip.Provider>
