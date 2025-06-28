@@ -44,18 +44,14 @@
             }`}
         >
             {#if $settingsStore.alwaysOnTop}
-                <PinOff class="h-4 w-4" />
-            {:else}
                 <Pin class="h-4 w-4" />
+            {:else}
+                <PinOff class="h-4 w-4" />
             {/if}
         </Tooltip.Trigger>
         <Tooltip.Content side="top">
             <p>
-                {#if $settingsStore.alwaysOnTop}
-                    Отключить «Всегда поверх всех окон»
-                {:else}
-                    Включить «Всегда поверх всех окон»
-                {/if}
+                Поверх всех окон
             </p>
         </Tooltip.Content>
     </Tooltip.Root>

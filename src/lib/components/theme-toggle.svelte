@@ -40,7 +40,7 @@
           />
         </DropdownMenu.Trigger>
 
-        <DropdownMenu.Content align="end">
+        <DropdownMenu.Content>
           <DropdownMenu.RadioGroup bind:value={selected}>
             <DropdownMenu.RadioItem value="light">
               <Sun class="mr-2 h-4 w-4" />

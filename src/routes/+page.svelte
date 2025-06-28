@@ -28,7 +28,6 @@
     Clock,
     ArrowRight,
     CircleCheckBig,
-    Pin,
   } from "lucide-svelte"; // Иконки
 
   /*
@@ -40,6 +39,7 @@
     - taskToDelete: задача для удаления
     - currentTime: переменная для отслеживания времени
   */
+  let isSingleColumn = $state(false);
   let isTaskModalOpen = $state(false);
   let isSettingsModalOpen = $state(false);
   let isDeleteDialogOpen = $state(false);
@@ -82,6 +82,9 @@
       await win.setAlwaysOnTop(value.alwaysOnTop);
     });
 
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
     // Ставим таймер до полуночи
     let midnightTimerId = setTimeout(() => {
       currentTime = new Date(); // принудительно обновляем дату, что триггернет пересчёт today
@@ -102,6 +105,7 @@
       unsubscribeTasks();
       unsubscribeSettings();
       clearTimeout(midnightTimerId);
+      window.removeEventListener("resize", handleResize);
     };
   });
 
@@ -213,28 +217,32 @@
     - Показывает соответствующее уведомление
   */
   function toggleTask(id: string) {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+    let updatedTask: Task | undefined;
 
     tasksStore.update((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              completed: !task.completed,
-              completedAt: !task.completed
-                ? new Date().toISOString()
-                : undefined,
-            }
-          : task,
-      ),
+      currentTasks.map((task) => {
+        if (task.id === id) {
+          const isNowCompleted = !task.completed;
+          updatedTask = {
+            ...task,
+            completed: isNowCompleted,
+            completedAt: isNowCompleted ? new Date().toISOString() : undefined,
+          };
+          return updatedTask;
+        }
+        return task;
+      }),
     );
 
-    toastStore.add({
-      title: task.completed ? "Задача невыполненная" : "Задача выполнена",
-      description: `Задача "${task.title}" ${task.completed ? "отмечена как невыполненная." : "отмечена как выполненная."}`,
-      variant: "default",
-    });
+    if (updatedTask) {
+      toastStore.add({
+        title: updatedTask.completed
+          ? "Задача выполнена"
+          : "Задача невыполненная",
+        description: `Задача "${updatedTask.title}" ${updatedTask.completed ? "отмечена как выполненная." : "отмечена как невыполненная."}`,
+        variant: "default",
+      });
+    }
   }
 
   /*
@@ -362,6 +370,11 @@
       addTask(task);
     }
   }
+
+  // Слежение за размером окна
+  function handleResize() {
+    isSingleColumn = window.innerWidth < 1280; // xl breakpoint
+  }
 </script>
 
 <div class="min-h-screen bg-background transition-colors duration-300">
@@ -422,7 +435,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
       <!-- Карточка будущих задач -->
       <Card
-        class="bg-orange-50 dark:bg-orange-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-orange-300 dark:border-orange-900 bg-orange-50 dark:bg-orange-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
       >
         <CardContent class="px-6 py-0">
           <div class="flex flex-col gap-1">
@@ -437,7 +450,7 @@
 
       <!-- Карточка просроченных задач -->
       <Card
-        class="bg-red-50 dark:bg-red-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
       >
         <CardContent class="px-6 py-0">
           <div class="flex flex-col gap-1">
@@ -452,7 +465,7 @@
 
       <!-- Карточка задач на сегодня -->
       <Card
-        class="bg-blue-50 dark:bg-blue-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-blue-300 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
       >
         <CardContent class="px-6 py-0">
           <div class="flex flex-col gap-1">
@@ -467,7 +480,7 @@
 
       <!-- Карточка выполненных задач -->
       <Card
-        class="bg-green-50 dark:bg-green-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-green-300 dark:border-green-900 bg-green-50 dark:bg-green-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
       >
         <CardContent class="px-6 py-0">
           <div class="flex flex-col gap-1">
@@ -483,29 +496,31 @@
 
     <!-- Разделы с задачами -->
     <div class="grid gap-4 grid-cols-1 xl:grid-cols-3">
-      <!-- Будущие задачи -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2">
-            <Clock class="h-5 w-5 text-orange-500" />
-            Ближайшие задачи
-            <Badge variant="secondary">{futureTasks.length}</Badge>
-            <ArrowRight class="h-5 w-5" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent class="px-4">
-          <div class="space-y-2">
-            {#each futureTasks as task (task.id)}
-              <TaskItem
-                {task}
-                onToggle={toggleTask}
-                onEdit={openEditModal}
-                onDelete={openDeleteDialog}
-              />
-            {/each}
-          </div>
-        </CardContent>
-      </Card>
+      {#if !isSingleColumn || futureTasks.length > 0}
+        <!-- Будущие задачи -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <Clock class="h-5 w-5 text-orange-500" />
+              Ближайшие задачи
+              <Badge variant="secondary">{futureTasks.length}</Badge>
+              <ArrowRight class="h-5 w-5" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent class="px-4">
+            <div class="space-y-2">
+              {#each futureTasks as task (task.id)}
+                <TaskItem
+                  {task}
+                  onToggle={toggleTask}
+                  onEdit={openEditModal}
+                  onDelete={openDeleteDialog}
+                />
+              {/each}
+            </div>
+          </CardContent>
+        </Card>
+      {/if}
 
       <!-- Задачи на сегодня -->
       <Card>
@@ -541,28 +556,30 @@
       </Card>
 
       <!-- Выполненные задачи -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2">
-            <CircleCheckBig class="h-5 w-5 text-green-500" />
-            Выполненные задачи
-            <Badge variant="secondary">{completedTasks.length}</Badge>
-            <ArrowRight class="h-5 w-5" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent class="px-4">
-          <div class="space-y-2">
-            {#each completedTasks as task (task.id)}
-              <TaskItem
-                {task}
-                onToggle={toggleTask}
-                onEdit={openEditModal}
-                onDelete={openDeleteDialog}
-              />
-            {/each}
-          </div>
-        </CardContent>
-      </Card>
+      {#if !isSingleColumn || completedTasks.length > 0}
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <CircleCheckBig class="h-5 w-5 text-green-500" />
+              Выполненные задачи
+              <Badge variant="secondary">{completedTasks.length}</Badge>
+              <ArrowRight class="h-5 w-5" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent class="px-4">
+            <div class="space-y-2">
+              {#each completedTasks as task (task.id)}
+                <TaskItem
+                  {task}
+                  onToggle={toggleTask}
+                  onEdit={openEditModal}
+                  onDelete={openDeleteDialog}
+                />
+              {/each}
+            </div>
+          </CardContent>
+        </Card>
+      {/if}
     </div>
 
     <!-- Модальные окна -->

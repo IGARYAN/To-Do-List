@@ -1,12 +1,3 @@
-<!--
-  Компонент TaskItem - отображает одну задачу в списке
-  Основные функции:
-  - Отображение информации о задаче (название, описание, дата)
-  - Переключение статуса выполнения
-  - Редактирование и удаление задачи
-  - Визуальное выделение просроченных и сегодняшних задач
--->
-
 <script lang="ts">
   // Импорты библиотек и компонентов
   import { format } from "date-fns"; // Для форматирования дат
@@ -60,22 +51,6 @@
     return date;
   });
 
-  // Вчерашняя дата
-  // const yesterday = $derived.by(() => {
-  //   const date = new Date();
-  //   date.setDate(date.getDate() - 1);
-  //   date.setHours(0, 0, 0, 0);
-  //   return date;
-  // });
-
-  // Позавчерашняя дата
-  // const dayBeforeYesterday = $derived.by(() => {
-  //   const date = new Date();
-  //   date.setDate(date.getDate() - 2);
-  //   date.setHours(0, 0, 0, 0);
-  //   return date;
-  // });
-
   // Завтрашняя дата
   const tomorrow = $derived.by(() => {
     const date = new Date();
@@ -83,14 +58,6 @@
     date.setHours(0, 0, 0, 0);
     return date;
   });
-
-  // Послезавтрашняя дата
-  // const dayAfterTomorrow = $derived.by(() => {
-  //   const date = new Date();
-  //   date.setDate(date.getDate() + 2);
-  //   date.setHours(0, 0, 0, 0);
-  //   return date;
-  // });
 
   /*
     Определение статусов задачи по дате выполнения
@@ -100,14 +67,7 @@
     taskDate.getTime() < today.getTime() && !task.completed,
   );
   const isToday = $derived(taskDate.getTime() === today.getTime());
-  // const isYesterday = $derived(taskDate.getTime() === yesterday.getTime());
-  // const isDayBeforeYesterday = $derived(
-  //   taskDate.getTime() === dayBeforeYesterday.getTime(),
-  // );
   const isTomorrow = $derived(taskDate.getTime() === tomorrow.getTime());
-  // const isDayAfterTomorrow = $derived(
-  //   taskDate.getTime() === dayAfterTomorrow.getTime(),
-  // );
 </script>
 
 <Card.Root
@@ -177,22 +137,6 @@
           >
         {/if}
 
-        <!-- {#if isDayBeforeYesterday}
-          <Badge
-            variant="secondary"
-            class="bg-teal-700 dark:bg-teal-800 text-white text-xs"
-            >Позавчера</Badge
-          >
-        {/if} -->
-
-        <!-- {#if isYesterday}
-          <Badge
-            variant="secondary"
-            class="bg-green-700 dark:bg-green-800 text-white text-xs"
-            >Вчера</Badge
-          >
-        {/if} -->
-
         {#if isTomorrow}
           <Badge
             variant="secondary"
@@ -201,13 +145,6 @@
           >
         {/if}
 
-        <!-- {#if isDayAfterTomorrow}
-          <Badge
-            variant="secondary"
-            class="bg-yellow-700 dark:bg-yellow-800 text-white text-xs"
-            >Послезавтра</Badge
-          >
-        {/if} -->
       </div>
     </div>
 
