@@ -27,6 +27,7 @@
     Calendar,
     Clock,
     ArrowRight,
+    ArrowDown,
     CircleCheckBig,
   } from "lucide-svelte"; // Иконки
 
@@ -238,7 +239,7 @@
       toastStore.add({
         title: updatedTask.completed
           ? "Задача выполнена"
-          : "Задача невыполненная",
+          : "Задача не выполнена",
         description: `Задача "${updatedTask.title}" ${updatedTask.completed ? "отмечена как выполненная." : "отмечена как невыполненная."}`,
         variant: "default",
       });
@@ -504,7 +505,11 @@
               <Clock class="h-5 w-5 text-orange-500" />
               Ближайшие задачи
               <Badge variant="secondary">{futureTasks.length}</Badge>
-              <ArrowRight class="h-5 w-5" />
+              {#if isSingleColumn}
+                <ArrowDown class="h-5 w-5" />
+              {:else}
+                <ArrowRight class="h-5 w-5" />
+              {/if}
             </CardTitle>
           </CardHeader>
           <CardContent class="px-4">
@@ -531,7 +536,11 @@
             <Badge variant="secondary"
               >{overdueTasks.length + todayTasks.length}</Badge
             >
-            <ArrowRight class="h-5 w-5" />
+            {#if isSingleColumn}
+              <ArrowDown class="h-5 w-5" />
+            {:else}
+              <ArrowRight class="h-5 w-5" />
+            {/if}
           </CardTitle>
         </CardHeader>
         <CardContent class="px-4">
@@ -563,7 +572,11 @@
               <CircleCheckBig class="h-5 w-5 text-green-500" />
               Выполненные задачи
               <Badge variant="secondary">{completedTasks.length}</Badge>
-              <ArrowRight class="h-5 w-5" />
+              {#if isSingleColumn}
+                <ArrowDown class="h-5 w-5" />
+              {:else}
+                <ArrowRight class="h-5 w-5" />
+              {/if}
             </CardTitle>
           </CardHeader>
           <CardContent class="px-4">

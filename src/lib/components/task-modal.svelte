@@ -255,7 +255,6 @@
                     )}>Отмена</Dialog.Close
                 >
                 <Button
-                    variant={task ? "secondary" : undefined}
                     class="flex-1 transition-all duration-300"
                     onclick={taskSave}
                 >
@@ -264,6 +263,7 @@
                 </Button>
                 {#if task}
                     <Button
+                        variant="outline"
                         class="flex-1 transition-all duration-300"
                         onclick={createCopy}
                     >

@@ -60,6 +60,6 @@
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     </Tooltip.Trigger>
-    <Tooltip.Content><p>Изменить тему оформления</p></Tooltip.Content>
+    <Tooltip.Content><p>Тема оформления</p></Tooltip.Content>
   </Tooltip.Root>
 </Tooltip.Provider>
