@@ -19,6 +19,7 @@ export interface AppSettings {
   theme: "light" | "dark" | "system"; // Тема оформления
   saveWindowState: boolean;
   alwaysOnTop: boolean;
+  encryptTasks?: boolean;
 
   // Добавляем состояние окна:
   windowState?: {

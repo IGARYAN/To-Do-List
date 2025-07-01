@@ -1,5 +1,5 @@
-import { writable } from "svelte/store";
-import { readSettings, writeSettings } from "./app-store"; // наши функции для файлов
+import { writable, get } from "svelte/store";
+import { settings } from "$lib/stores/app-state";
 
 type Theme = "dark" | "light" | "system";
 
@@ -54,9 +54,8 @@ function unwatchSystemTheme() {
 /**
  * Инициализация темы из settings.json
  */
-async function initTheme() {
-  const settings = await readSettings();
-  const theme = settings?.theme ?? defaultTheme;
+function initTheme() {
+  const theme = get(settings).theme ?? defaultTheme;
   currentTheme = theme;
   internalSet(theme);
   applyTheme(theme);
@@ -73,7 +72,7 @@ export const themeStore = {
   /**
    * Устанавливает новую тему
    */
-  set: async (theme: Theme) => {
+  set: (theme: Theme) => {
     currentTheme = theme;
     internalSet(theme);
     applyTheme(theme);
@@ -82,10 +81,8 @@ export const themeStore = {
       watchSystemTheme();
     }
 
-    // Обновляем settings.json
-    const settings = await readSettings();
-    settings.theme = theme;
-    await writeSettings(settings);
+    // Обновляем глобальные настройки
+    settings.update(s => ({...s, theme}));
   },
   init: initTheme,
 };

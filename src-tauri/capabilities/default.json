@@ -67,6 +67,7 @@
     "core:window:allow-set-maximizable",
     "core:window:allow-set-resizable",
     "core:window:allow-toggle-maximize",
+    "core:window:allow-set-focus",
     "core:window:allow-set-title"
   ]
 }

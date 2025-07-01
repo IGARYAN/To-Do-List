@@ -6,7 +6,6 @@
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte"; // Диалог подтверждения удаления
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
-  import { tasksStore, settingsStore } from "$lib/stores/app-store"; // Хранилища состояний
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import type { Task, AppSettings } from "$lib/types/task"; // Типы данных
   import { buttonVariants } from "$lib/components/ui/button"; // Кнопки UI
@@ -22,7 +21,6 @@
   } from "$lib/components/ui/card"; // Карточки UI
   import {
     Plus,
-    Settings,
     CircleX,
     Calendar,
     Clock,
@@ -30,38 +28,41 @@
     ArrowDown,
     CircleCheckBig,
   } from "lucide-svelte"; // Иконки
+  import {
+    isSingleColumn,
+    isTaskModalOpen,
+    isDeleteDialogOpen,
+    editingTask,
+    taskToDelete,
+    currentTime,
+    tasks,
+    settings
+  } from "$lib/stores/app-state";
 
-  /*
-    Реактивные состояния страницы:
-    - isTaskModalOpen: открыто ли модальное окно задачи
-    - isSettingsModalOpen: открыто ли модальное окно настроек
-    - isDeleteDialogOpen: открыт ли диалог подтверждения удаления
-    - editingTask: задача для редактирования (null если создание новой)
-    - taskToDelete: задача для удаления
-    - currentTime: переменная для отслеживания времени
-  */
-  let isSingleColumn = $state(false);
-  let isTaskModalOpen = $state(false);
-  let isSettingsModalOpen = $state(false);
-  let isDeleteDialogOpen = $state(false);
-  let editingTask = $state<Task | null>(null);
-  let taskToDelete = $state<Task | null>(null);
-  let currentTime = $state(new Date());
+  // import { TrayIcon } from "@tauri-apps/api/tray";
+  // import { Menu } from "@tauri-apps/api/menu";
 
-  /*
-    Реактивные данные из хранилищ:
-    - tasks: список всех задач
-    - settings: настройки приложения
-  */
-  let tasks = $state<Task[]>([]);
-  let settings = $state<AppSettings>({
-    autoDeleteDays: 7, // Автоудаление выполненных задач через N дней
-    futureDays: 7, // Сколько дней вперед показывать задачи
-    theme: "system", // Тема оформления
-    saveWindowState: false, // Сохранять состояние окна
-    windowState: null, // Состояние окна
-    alwaysOnTop: false,
-  });
+  // async function setupTray() {
+  //   const menu = await Menu.new({
+  //     items: [
+  //       {
+  //         id: "quit",
+  //         text: "Выход",
+  //       },
+  //     ],
+  //   });
+
+  //   const options = {
+  //     menu,
+  //     icon: "icons/icon.ico",
+  //     tooltip: "Мое приложение",
+  //     menuOnLeftClick: true,
+  //   };
+
+  //   const tray = await TrayIcon.new(options);
+  // }
+
+  // setupTray();
 
   /*
     Подписка на изменения в хранилищах при монтировании компонента
@@ -71,14 +72,8 @@
   onMount(() => {
     document.documentElement.classList.add("loaded");
 
-    const unsubscribeTasks = tasksStore.subscribe((value) => {
-      tasks = value;
-    });
-
-    const unsubscribeSettings = settingsStore.subscribe(async (value) => {
-      settings = value;
-
-      // Сразу применяем состояние окна при изменении настроек
+    // Подписка на изменения настроек для обновления состояния окна
+    const unsubscribeSettings = settings.subscribe(async (value) => {
       const win = await getCurrentWindow();
       await win.setAlwaysOnTop(value.alwaysOnTop);
     });
@@ -88,7 +83,7 @@
 
     // Ставим таймер до полуночи
     let midnightTimerId = setTimeout(() => {
-      currentTime = new Date(); // принудительно обновляем дату, что триггернет пересчёт today
+      $currentTime = new Date(); // принудительно обновляем дату, что триггернет пересчёт today
 
       // Сразу ставим таймер на следующую полночь
       midnightTimerId = startMidnightTimer();
@@ -96,14 +91,13 @@
 
     function startMidnightTimer() {
       return setTimeout(() => {
-        currentTime = new Date();
+        $currentTime = new Date();
         midnightTimerId = startMidnightTimer(); // рекурсивно продолжаем на каждый следующий день
       }, getMillisecondsToMidnight());
     }
 
     // Отписка при размонтировании
     return () => {
-      unsubscribeTasks();
       unsubscribeSettings();
       clearTimeout(midnightTimerId);
       window.removeEventListener("resize", handleResize);
@@ -125,24 +119,24 @@
     Удаляет задачи, выполненные более autoDeleteDays дней назад
   */
   $effect(() => {
-    if (tasks.length === 0) return;
+    if ($tasks.length === 0) return;
 
     const now = new Date();
-    const updatedTasks = tasks.filter((task) => {
+    const updatedTasks = $tasks.filter((task) => {
       if (task.completed && task.completedAt) {
         const completedDate = new Date(task.completedAt);
         const daysDiff = Math.floor(
           (now.getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24),
         );
-        return daysDiff < settings.autoDeleteDays;
+        return daysDiff < $settings.autoDeleteDays;
       }
       return true;
     });
 
     // Если задачи были удалены - показываем уведомление
-    if (updatedTasks.length !== tasks.length) {
-      const deletedCount = tasks.length - updatedTasks.length;
-      tasksStore.set(updatedTasks);
+    if (updatedTasks.length !== $tasks.length) {
+      const deletedCount = $tasks.length - updatedTasks.length;
+      $tasks = updatedTasks;
       toastStore.add({
         title: "Авто удаление задач",
         description: `Удалено ${deletedCount} выполненных задач.`,
@@ -163,7 +157,7 @@
       id: Date.now().toString(),
     };
 
-    tasksStore.update((currentTasks) => [...currentTasks, newTask]);
+    $tasks = [...$tasks, newTask];
 
     toastStore.add({
       title: "Новая задача",
@@ -178,10 +172,8 @@
     - Показывает уведомление об успешном обновлении
   */
   function updateTask(updatedTask: Task) {
-    tasksStore.update((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === updatedTask.id ? updatedTask : task,
-      ),
+    $tasks = $tasks.map((task) =>
+      task.id === updatedTask.id ? updatedTask : task
     );
 
     toastStore.add({
@@ -197,10 +189,8 @@
     - Показывает уведомление об удалении
   */
   function deleteTask(id: string) {
-    const taskToRemove = tasks.find((task) => task.id === id);
-    tasksStore.update((currentTasks) =>
-      currentTasks.filter((task) => task.id !== id),
-    );
+    const taskToRemove = $tasks.find((task) => task.id === id);
+    $tasks = $tasks.filter((task) => task.id !== id);
 
     if (taskToRemove) {
       toastStore.add({
@@ -220,20 +210,18 @@
   function toggleTask(id: string) {
     let updatedTask: Task | undefined;
 
-    tasksStore.update((currentTasks) =>
-      currentTasks.map((task) => {
-        if (task.id === id) {
-          const isNowCompleted = !task.completed;
-          updatedTask = {
-            ...task,
-            completed: isNowCompleted,
-            completedAt: isNowCompleted ? new Date().toISOString() : undefined,
-          };
-          return updatedTask;
-        }
-        return task;
-      }),
-    );
+    $tasks = $tasks.map((task) => {
+      if (task.id === id) {
+        const isNowCompleted = !task.completed;
+        updatedTask = {
+          ...task,
+          completed: isNowCompleted,
+          completedAt: isNowCompleted ? new Date().toISOString() : undefined,
+        };
+        return updatedTask;
+      }
+      return task;
+    });
 
     if (updatedTask) {
       toastStore.add({
@@ -252,49 +240,35 @@
 
   // Открытие модального окна редактирования задачи
   function openEditModal(task: Task) {
-    editingTask = task;
-    isTaskModalOpen = true;
+    $editingTask = task;
+    $isTaskModalOpen = true;
   }
 
   // Закрытие модального окна задачи
   function closeTaskModal() {
-    isTaskModalOpen = false;
-    editingTask = null;
+    $isTaskModalOpen = false;
+    $editingTask = null;
   }
 
   // Открытие диалога подтверждения удаления
   function openDeleteDialog(task: Task) {
-    taskToDelete = task;
-    isDeleteDialogOpen = true;
+    $taskToDelete = task;
+    $isDeleteDialogOpen = true;
   }
 
   // Подтверждение удаления задачи
   function confirmDelete() {
-    if (taskToDelete) {
-      deleteTask(taskToDelete.id);
-      taskToDelete = null;
-      isDeleteDialogOpen = false;
+    if ($taskToDelete) {
+      deleteTask($taskToDelete.id);
+      $taskToDelete = null;
+      $isDeleteDialogOpen = false;
     }
   }
 
   // Отмена удаления задачи
   function cancelDelete() {
-    taskToDelete = null;
-    isDeleteDialogOpen = false;
-  }
-
-  /*
-    Сохранение настроек приложения
-    - Обновляет хранилище настроек
-    - Показывает уведомление об успешном сохранении
-  */
-  function saveSettings(newSettings: AppSettings) {
-    settingsStore.set(newSettings);
-    toastStore.add({
-      title: "Настройки успешно сохранены",
-      description: "Изменения успешно применены.",
-      variant: "default",
-    });
+    $taskToDelete = null;
+    $isDeleteDialogOpen = false;
   }
 
   /*
@@ -304,14 +278,14 @@
 
   // Текущая дата (нормализованная)
   const today = $derived.by(() => {
-    const date = new Date(currentTime);
+    const date = new Date($currentTime);
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
   // Выполненные задачи
   const completedTasks = $derived(
-    tasks
+    $tasks
       .filter((task) => task.completed)
       .sort(
         (a, b) =>
@@ -322,7 +296,7 @@
 
   // Просроченные задачи (отсортированные от старых к новым)
   const overdueTasks = $derived(
-    tasks
+    $tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -334,7 +308,7 @@
 
   // Задачи на сегодня (отсортированные по времени)
   const todayTasks = $derived(
-    tasks
+    $tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -346,7 +320,7 @@
 
   // Будущие задачи (в пределах futureDays дней, отсортированные)
   const futureTasks = $derived(
-    tasks
+    $tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -354,7 +328,7 @@
         const daysDiff = Math.floor(
           (taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
-        return daysDiff > 0 && daysDiff <= settings.futureDays;
+        return daysDiff > 0 && daysDiff <= $settings.futureDays;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
   );
@@ -374,7 +348,7 @@
 
   // Слежение за размером окна
   function handleResize() {
-    isSingleColumn = window.innerWidth < 1280; // xl breakpoint
+    $isSingleColumn = window.innerWidth < 1280; // xl breakpoint
   }
 </script>
 
@@ -398,26 +372,12 @@
       <div class="flex items-center gap-2">
         <AlwaysOnTop />
         <ThemeToggle />
+        <SettingsModal />
 
         <Tooltip.Provider delayDuration={1000}>
           <Tooltip.Root>
             <Tooltip.Trigger
-              onclick={() => (isSettingsModalOpen = true)}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
-            >
-              <Settings class="h-4 w-4" />
-            </Tooltip.Trigger>
-
-            <Tooltip.Content>
-              <p>Настройки</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => (isTaskModalOpen = true)}
+              onclick={() => ($isTaskModalOpen = true)}
               class={`transition-all duration-300 ${buttonVariants({ variant: "default" })}`}
             >
               <Plus class="h-4 w-4" />
@@ -497,7 +457,7 @@
 
     <!-- Разделы с задачами -->
     <div class="grid gap-4 grid-cols-1 xl:grid-cols-3">
-      {#if !isSingleColumn || futureTasks.length > 0}
+      {#if !$isSingleColumn || futureTasks.length > 0}
         <!-- Будущие задачи -->
         <Card>
           <CardHeader>
@@ -505,7 +465,7 @@
               <Clock class="h-5 w-5 text-orange-500" />
               Ближайшие задачи
               <Badge variant="secondary">{futureTasks.length}</Badge>
-              {#if isSingleColumn}
+              {#if $isSingleColumn}
                 <ArrowDown class="h-5 w-5" />
               {:else}
                 <ArrowRight class="h-5 w-5" />
@@ -536,7 +496,7 @@
             <Badge variant="secondary"
               >{overdueTasks.length + todayTasks.length}</Badge
             >
-            {#if isSingleColumn}
+            {#if $isSingleColumn}
               <ArrowDown class="h-5 w-5" />
             {:else}
               <ArrowRight class="h-5 w-5" />
@@ -565,14 +525,14 @@
       </Card>
 
       <!-- Выполненные задачи -->
-      {#if !isSingleColumn || completedTasks.length > 0}
+      {#if !$isSingleColumn || completedTasks.length > 0}
         <Card>
           <CardHeader>
             <CardTitle class="flex items-center gap-2">
               <CircleCheckBig class="h-5 w-5 text-green-500" />
               Выполненные задачи
               <Badge variant="secondary">{completedTasks.length}</Badge>
-              {#if isSingleColumn}
+              {#if $isSingleColumn}
                 <ArrowDown class="h-5 w-5" />
               {:else}
                 <ArrowRight class="h-5 w-5" />
@@ -597,27 +557,18 @@
 
     <!-- Модальные окна -->
     <TaskModal
-      isOpen={isTaskModalOpen}
+      isOpen={$isTaskModalOpen}
       onClose={closeTaskModal}
       onSave={handleSave}
-      task={editingTask}
-    />
-
-    <SettingsModal
-      isOpen={isSettingsModalOpen}
-      onClose={() => (isSettingsModalOpen = false)}
-      {settings}
-      onSave={saveSettings}
+      task={$editingTask}
     />
 
     <!-- Диалог подтверждения удаления -->
     <DeleteConfirmDialog
-      isOpen={isDeleteDialogOpen}
+      isOpen={$isDeleteDialogOpen}
       onConfirm={confirmDelete}
       onCancel={cancelDelete}
-      taskTitle={taskToDelete?.title || ""}
+      taskTitle={$taskToDelete?.title || ""}
     />
-
-    <!-- Toast уведомления -->
   </div>
 </div>

@@ -4,6 +4,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { themeStore } from "$lib/stores/theme-store";
+  import { settings } from "$lib/stores/app-state";
   import { onDestroy } from "svelte";
 
   // Внутреннее состояние для RadioGroup
@@ -19,7 +20,10 @@
   });
 
   // Отслеживаем выбор и обновляем тему
-  $: themeStore.set(selected);
+  $: {
+    themeStore.set(selected);
+    settings.update(s => ({...s, theme: selected}));
+  }
 </script>
 
 <Tooltip.Provider delayDuration={1000}>

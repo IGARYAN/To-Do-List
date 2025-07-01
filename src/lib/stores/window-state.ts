@@ -1,27 +1,42 @@
 import { getCurrentWindow, LogicalSize, LogicalPosition } from "@tauri-apps/api/window";
-import { readSettings, writeSettings } from "$lib/stores/app-store";
+import { saveSettings } from '$lib/stores/app-store';
+import { settings } from "$lib/stores/app-state";
+import { get } from "svelte/store";
 
 const appWindow = getCurrentWindow();
 
 /** Сохраняем состояние окна */
 export async function saveWindow() {
     try {
-        const settings = await readSettings();
-        if (!settings.saveWindowState) return;
+        const currentSettings = get(settings);
+        if (!currentSettings.saveWindowState) {
+            console.log("Сохранение состояния окна отключено в настройках");
+            return;
+        }
 
         // Проверяем, минимизировано ли окно
         const isMinimized = await appWindow.isMinimized();
         if (isMinimized) {
             console.log("Окно свернуто — состояние не сохраняется.");
             return;
-        } // Сохраняем только если окно не минимизировано
-        // Сохраняем внешнюю позицию (включает заголовок и рамки)
+        }
+
+        // Получаем текущее состояние окна
         const { x, y } = await appWindow.outerPosition();
-        // Сохраняем только внутренний размер (контентную область)
         const { width, height } = await appWindow.innerSize();
         const isMaximized = await appWindow.isMaximized();
-        settings.windowState = { x, y, width, height, isMaximized };
-        await writeSettings(settings);
+
+        console.log("Сохранение состояния окна:", { x, y, width, height, isMaximized });
+
+        // Обновляем состояние через реактивное обновление
+        const newSettings = {
+            ...currentSettings,
+            windowState: { x, y, width, height, isMaximized }
+        };
+        settings.set(newSettings);
+
+        // 🔥 Принудительно сохраняем на диск
+        await saveSettings(newSettings);
     } catch (e) {
         console.error("Ошибка при сохранении окна:", e);
     }
@@ -30,9 +45,9 @@ export async function saveWindow() {
 /** Восстанавливаем состояние окна */
 export async function restoreWindow() {
     try {
-        const settings = await readSettings();
-        if (settings.saveWindowState && settings.windowState) {
-            const { x, y, width, height, isMaximized } = settings.windowState;
+        const currentSettings = get(settings);
+        if (currentSettings.saveWindowState && currentSettings.windowState) {
+            const { x, y, width, height, isMaximized } = currentSettings.windowState;
 
             if (isMaximized) {
                 await appWindow.maximize();
@@ -49,8 +64,10 @@ export async function restoreWindow() {
 /** Автоматическая привязка к событию закрытия */
 export async function initWindow() {
     appWindow.onCloseRequested(async (event) => {
+        console.log("Обработка запроса на закрытие окна");
         try { // 💾 Сохраняем состояние окна
             await saveWindow();
+            console.log("Состояние окна сохранено, закрываем окно");
             // ✅ Разрешаем закрытие окна
             await appWindow.close();
         } catch (e) {

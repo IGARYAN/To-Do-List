@@ -1,123 +1,57 @@
-import { writable } from "svelte/store";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { resourceDir, join } from "@tauri-apps/api/path";
-import type { Task, AppSettings } from "$lib/types/task";
+import { settings } from "$lib/stores/app-state";
+import type { AppSettings } from "$lib/types/task";
 
-// 📁 Имена файлов
-const TASKS_FILE = "tasks.json";
+// 📁 Имя файла настроек
 const SETTINGS_FILE = "settings.json";
 
-// 🛠️ Настройки по умолчанию
-const defaultSettings: AppSettings = {
-  autoDeleteDays: 7,
-  futureDays: 7,
-  theme: "system",
-  saveWindowState: false,
-  alwaysOnTop: false,
-};
+// Флаг инициализации
+let isInitialized = false;
 
-/**
- * 🔄 Получение абсолютного пути к файлу в каталоге данных приложения
- */
+// Получаем абсолютный путь к файлу
 async function getFilePath(fileName: string): Promise<string> {
   const dir = await resourceDir();
   return await join(dir, fileName);
 }
 
-/**
- * 📥 Загрузка данных из файла
- */
-async function loadFromFile<T>(fileName: string, defaultValue: T): Promise<T> {
+// Чтение настроек из файла
+export async function loadSettings(): Promise<void> {
   try {
-    const path = await getFilePath(fileName);
+    const path = await getFilePath(SETTINGS_FILE);
+    console.log(`Загрузка настроек из: ${path}`);
     const content = await readTextFile(path);
-    return JSON.parse(content) as T;
+    console.log("Содержимое файла настроек:", content);
+    const fileSettings = JSON.parse(content) as AppSettings;
+
+    settings.set(fileSettings);
+    console.log("✅ Настройки успешно загружены из файла.");
   } catch (error) {
-    console.warn(`⚠️ Не удалось загрузить файл ${fileName}, используется значение по умолчанию`);
-    return defaultValue;
+    console.warn(`⚠️ Файл настроек не найден, используются настройки по умолчанию.`, error);
+    // Если файла нет — просто продолжаем с текущими значениями store.
+  } finally {
+    isInitialized = true; // Считаем, что инициализация завершена
+    console.log("Инициализация настроек завершена");
   }
 }
 
-/**
- * 💾 Сохранение данных в файл
- */
-async function saveToFile<T>(fileName: string, data: T): Promise<void> {
+// Автосохранение настроек при изменении
+settings.subscribe((value) => {
+  if (!isInitialized) return; // Игнорируем изменения до инициализации
+
+  saveSettings(value);
+});
+
+// Сохранение настроек в файл
+export async function saveSettings(data: AppSettings): Promise<void> {
   try {
-    const path = await getFilePath(fileName);
+    const path = await getFilePath(SETTINGS_FILE);
+    console.log(`Сохранение настроек в: ${path}`);
     const content = JSON.stringify(data, null, 2);
+    console.log("Содержимое для сохранения:", content);
     await writeTextFile(path, content);
+    console.log("💾 Настройки успешно сохранены.");
   } catch (error) {
-    console.error(`❌ Ошибка при сохранении файла ${fileName}:`, error);
+    console.error(`❌ Ошибка при сохранении настроек:`, error);
   }
 }
-
-/**
- * 🧠 Загрузка настроек
- */
-async function readSettings(): Promise<AppSettings> {
-  return await loadFromFile<AppSettings>(SETTINGS_FILE, defaultSettings);
-}
-
-/**
- * 💾 Сохранение настроек
- */
-async function writeSettings(settings: AppSettings): Promise<void> {
-  await saveToFile<AppSettings>(SETTINGS_FILE, settings);
-}
-
-/**
- * ✅ Store для задач
- */
-function createTasksStore() {
-  const store = writable<Task[]>([], (set) => {
-    // При инициализации загружаем из файла
-    loadFromFile<Task[]>(TASKS_FILE, []).then(set);
-    return () => {};
-  });
-
-  return {
-    subscribe: store.subscribe,
-    set: async (tasks: Task[]) => {
-      store.set(tasks);
-      await saveToFile(TASKS_FILE, tasks);
-    },
-    update: async (fn: (tasks: Task[]) => Task[]) => {
-      store.update((current) => {
-        const updated = fn(current);
-        saveToFile(TASKS_FILE, updated);
-        return updated;
-      });
-    },
-  };
-}
-
-/**
- * ✅ Store для настроек
- */
-function createSettingsStore() {
-  const store = writable<AppSettings>(defaultSettings, (set) => {
-    readSettings().then(set);
-    return () => {};
-  });
-
-  return {
-    subscribe: store.subscribe,
-    set: async (settings: AppSettings) => {
-      store.set(settings);
-      await writeSettings(settings);
-    },
-    update: async (fn: (settings: AppSettings) => AppSettings) => {
-      store.update((current) => {
-        const updated = fn(current);
-        writeSettings(updated);
-        return updated;
-      });
-    },
-  };
-}
-
-export const tasksStore = createTasksStore();
-export const settingsStore = createSettingsStore();
-
-// ⬇️ Экспортируем для theme-store.ts
-export { readSettings, writeSettings };
