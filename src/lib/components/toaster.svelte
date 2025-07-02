@@ -3,10 +3,10 @@
   import { CheckCircle2, AlertCircle, X } from 'lucide-svelte'
   import { Button } from "$lib/components/ui/button/index.js";
   import { toastStore } from '$lib/stores/toast-store'
-  import type { Toast } from '$lib/types/toast'
+  import type { TypesToast } from '$lib/types/types-toast'
 
   // Состояние для хранения активных уведомлений
-  let toasts = $state<Toast[]>([])
+  let toasts = $state<TypesToast[]>([])
 
   // Подписываемся на изменения в store уведомлений
   onMount(() => {
@@ -26,7 +26,7 @@
   /**
    * Получение иконки в зависимости от типа уведомления
    */
-  function getIcon(variant: Toast['variant']) {
+  function getIcon(variant: TypesToast['variant']) {
     switch (variant) {
       case 'destructive':
         return AlertCircle
@@ -38,7 +38,7 @@
   /**
    * Получение стилей в зависимости от типа уведомления
    */
-  function getToastStyles(variant: Toast['variant']) {
+  function getToastStyles(variant: TypesToast['variant']) {
     switch (variant) {
       case 'destructive':
         return 'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-50'

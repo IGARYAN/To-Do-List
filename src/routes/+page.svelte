@@ -7,7 +7,8 @@
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import type { Task, AppSettings } from "$lib/types/task"; // Типы данных
+  import type { TypesTask } from "$lib/types/types-task"; // Типы данных
+  import type { TypesSettings } from "$lib/types/types-settings"; // Типы данных
   import { buttonVariants } from "$lib/components/ui/button"; // Кнопки UI
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
@@ -151,8 +152,8 @@
     - Добавляет задачу в хранилище
     - Показывает уведомление об успешном создании
   */
-  function addTask(task: Omit<Task, "id">) {
-    const newTask: Task = {
+  function addTask(task: Omit<TypesTask, "id">) {
+    const newTask: TypesTask = {
       ...task,
       id: Date.now().toString(),
     };
@@ -171,7 +172,7 @@
     - Находит задачу по ID и заменяет ее данные
     - Показывает уведомление об успешном обновлении
   */
-  function updateTask(updatedTask: Task) {
+  function updateTask(updatedTask: TypesTask) {
     $tasks = $tasks.map((task) =>
       task.id === updatedTask.id ? updatedTask : task
     );
@@ -208,7 +209,7 @@
     - Показывает соответствующее уведомление
   */
   function toggleTask(id: string) {
-    let updatedTask: Task | undefined;
+    let updatedTask: TypesTask | undefined;
 
     $tasks = $tasks.map((task) => {
       if (task.id === id) {
@@ -239,7 +240,7 @@
   */
 
   // Открытие модального окна редактирования задачи
-  function openEditModal(task: Task) {
+  function openEditModal(task: TypesTask) {
     $editingTask = task;
     $isTaskModalOpen = true;
   }
@@ -251,7 +252,7 @@
   }
 
   // Открытие диалога подтверждения удаления
-  function openDeleteDialog(task: Task) {
+  function openDeleteDialog(task: TypesTask) {
     $taskToDelete = task;
     $isDeleteDialogOpen = true;
   }
@@ -338,9 +339,9 @@
     - Определяет, нужно ли создать новую или обновить существующую
     - Вызывает соответствующую функцию
   */
-  async function handleSave(task: Task | Omit<Task, "id">) {
+  async function handleSave(task: TypesTask | Omit<TypesTask, "id">) {
     if ("id" in task) {
-      updateTask(task as Task);
+      updateTask(task as TypesTask);
     } else {
       addTask(task);
     }

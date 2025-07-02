@@ -1,20 +1,20 @@
 import { writable } from "svelte/store"
-import type { Toast } from "$lib/types/toast"
+import type { TypesToast } from "$lib/types/types-toast"
 
 /**
  * Store для управления Toast уведомлениями
  */
 function createToastStore() {
-  const { subscribe, update } = writable<Toast[]>([])
+  const { subscribe, update } = writable<TypesToast[]>([])
 
   return {
     subscribe,
     /**
      * Добавление нового уведомления
      */
-    add: (toast: Omit<Toast, "id">) => {
+    add: (toast: Omit<TypesToast, "id">) => {
       const id = Date.now().toString()
-      const newToast: Toast = { ...toast, id }
+      const newToast: TypesToast = { ...toast, id }
 
       update((toasts) => [...toasts, newToast])
 

@@ -1,7 +1,7 @@
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { resourceDir, join } from "@tauri-apps/api/path";
 import { settings } from "$lib/stores/app-state";
-import type { AppSettings } from "$lib/types/task";
+import type { TypesSettings } from "$lib/types/types-settings";
 
 // 📁 Имя файла настроек
 const SETTINGS_FILE = "settings.json";
@@ -21,8 +21,7 @@ export async function loadSettings(): Promise<void> {
     const path = await getFilePath(SETTINGS_FILE);
     console.log(`Загрузка настроек из: ${path}`);
     const content = await readTextFile(path);
-    console.log("Содержимое файла настроек:", content);
-    const fileSettings = JSON.parse(content) as AppSettings;
+    const fileSettings = JSON.parse(content) as TypesSettings;
 
     settings.set(fileSettings);
     console.log("✅ Настройки успешно загружены из файла.");
@@ -43,12 +42,11 @@ settings.subscribe((value) => {
 });
 
 // Сохранение настроек в файл
-export async function saveSettings(data: AppSettings): Promise<void> {
+export async function saveSettings(data: TypesSettings): Promise<void> {
   try {
     const path = await getFilePath(SETTINGS_FILE);
     console.log(`Сохранение настроек в: ${path}`);
     const content = JSON.stringify(data, null, 2);
-    console.log("Содержимое для сохранения:", content);
     await writeTextFile(path, content);
     console.log("💾 Настройки успешно сохранены.");
   } catch (error) {

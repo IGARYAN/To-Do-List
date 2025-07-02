@@ -11,7 +11,7 @@
     import { toastStore } from "$lib/stores/toast-store";
     import { cn } from "$lib/utils";
     import { slide } from "svelte/transition";
-    import type { Task } from "$lib/types/task";
+    import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
         getLocalTimeZone,
@@ -22,9 +22,9 @@
     export let isOpen = false;
     export let onClose: () => void;
     export let onSave: (
-        task: Task | Omit<Task, "id">,
+        task: TypesTask | Omit<TypesTask, "id">,
     ) => Promise<void> = async () => {};
-    export let task: Task | null = null;
+    export let task: TypesTask | null = null;
 
     let isPopoverOpen = false;
     let value: CalendarDate | undefined;

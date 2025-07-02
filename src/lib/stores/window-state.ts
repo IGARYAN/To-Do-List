@@ -1,5 +1,5 @@
 import { getCurrentWindow, LogicalSize, LogicalPosition } from "@tauri-apps/api/window";
-import { saveSettings } from '$lib/stores/app-store';
+import { saveSettings } from '$lib/stores/settings-store';
 import { settings } from "$lib/stores/app-state";
 import { get } from "svelte/store";
 

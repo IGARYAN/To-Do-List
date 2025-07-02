@@ -8,15 +8,22 @@
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { slide } from "svelte/transition";
-  import { settings, isSettingsModalOpen } from "$lib/stores/app-state";
-
+  import {
+    settings,
+    isSettingsModalOpen,
+    currentPass,
+    isPinModalOpen,
+  } from "$lib/stores/app-state";
   import { get, writable } from "svelte/store";
+  import PinModal from "$lib/components/pin-modal.svelte"; // Модальное окно ПИН кода
 
   // Локальные копии полей
   let autoDeleteDays = writable(7);
   let futureDays = writable(7);
   let saveWindowState = writable(false);
   let encryptTasks = writable(false);
+
+  let isSavePending = false; // флаг для ожидания завершения работы с пин-кодом
 
   // Ошибки
   let autoDeleteError = writable("");
@@ -55,6 +62,26 @@
     return valid;
   }
 
+  function preSaveSettings() {
+    if (!validate()) return;
+
+    const pin = get(currentPass);
+
+    if (get(encryptTasks) && !pin) {
+      $isPinModalOpen = true;
+      isSavePending = true;
+      return;
+    }
+
+    if (!get(encryptTasks) && pin) {
+      $isPinModalOpen = true;
+      isSavePending = true;
+      return;
+    }
+
+    saveSettings();
+  }
+
   function saveSettings() {
     if (!validate()) return;
 
@@ -90,6 +117,12 @@
 
   function handleOpenAutoFocus(event: Event) {
     event.preventDefault(); // предотвращаем автофокус
+  }
+
+  function handlePinCancel() {
+    isSavePending = false;
+    encryptTasks.update((value) => !value);
+    isPinModalOpen.set(false);
   }
 </script>
 
@@ -215,7 +248,7 @@
               Отмена
             </Button>
             <Button
-              onclick={saveSettings}
+              onclick={preSaveSettings}
               class="flex-1 transition-all duration-300"
             >
               Сохранить
@@ -224,9 +257,18 @@
         </Dialog.Content>
       </Dialog.Root>
     </Tooltip.Trigger>
-
     <Tooltip.Content>
       <p>Настройки</p>
     </Tooltip.Content>
   </Tooltip.Root>
 </Tooltip.Provider>
+
+<PinModal
+  bind:open={$isPinModalOpen}
+  {isSavePending}
+  on:success={() => {
+    saveSettings();
+    isSavePending = false;
+  }}
+  on:cancel={handlePinCancel}
+/>

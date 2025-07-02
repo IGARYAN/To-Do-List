@@ -1,12 +1,11 @@
 <script lang="ts">
-  // Импорты библиотек и компонентов
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
   import { Calendar, Edit, Trash2, CheckCircle2, Circle } from "lucide-svelte"; // Иконки
   import { Button } from "$lib/components/ui/button/index.js"; // Кнопки
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
-  import type { Task } from "$lib/types/task"; // Тип задачи
+  import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
 
   /*
     Получаем пропсы компонента с использованием Svelte 5 $props рун
@@ -22,10 +21,10 @@
     onEdit,
     onDelete,
   }: {
-    task: Task;
+    task: TypesTask;
     onToggle: (id: string) => void;
-    onEdit: (task: Task) => void;
-    onDelete: (task: Task) => void;
+    onEdit: (task: TypesTask) => void;
+    onDelete: (task: TypesTask) => void;
   } = $props();
 
   // Реактивное состояние для отображения кнопок действий при наведении

@@ -1,11 +1,11 @@
 <script lang="ts">
   import "../app.css";
-  import { Window, getCurrentWindow } from "@tauri-apps/api/window";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
   import { onMount } from "svelte";
   import { themeStore } from "$lib/stores/theme-store"; // импорт темы
   import Toaster from "$lib/components/toaster.svelte";
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
-  import { loadSettings } from '$lib/stores/app-store';
+  import { loadSettings } from '$lib/stores/settings-store';
   import { settings } from "$lib/stores/app-state";
   import { goto } from '$app/navigation';
 

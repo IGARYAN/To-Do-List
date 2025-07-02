@@ -1,0 +1,9 @@
+/**
+ * Интерфейс Toast уведомления
+ */
+export interface TypesToast {
+  id: string                              // Уникальный идентификатор уведомления
+  title?: string                          // Заголовок уведомления
+  description?: string                    // Описание уведомления
+  variant?: "default" | "destructive"     // Тип уведомления (обычное или ошибка)
+}

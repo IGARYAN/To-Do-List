@@ -1,69 +1,39 @@
 <script lang="ts">
-    // import { page } from '$app/stores';
     import { SquareAsterisk } from "lucide-svelte";
-    import { Separator } from "$lib/components/ui/separator/index.js";
-    import * as InputOTP from "$lib/components/ui/input-otp/index.js";
     import { Button } from "$lib/components/ui/button/index.js";
+    import { Input } from "$lib/components/ui/input/index.js";
+    import { toastStore } from "$lib/stores/toast-store"; // Уведомления
+    import { settings, currentPass } from "$lib/stores/app-state";
 
-    // Чтение параметра mode из URL
-    // $: mode = $page.url.searchParams.get('mode') ?? 'unlock';
+    toastStore.add({
+        title: "Ошибка",
+        description: "Введен не верный пароль.",
+        variant: "destructive",
+    });
 </script>
 
 <div class="min-h-screen flex items-center justify-center">
-    <div class="w-full max-w-sm p-10 flex flex-col gap-6">
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col items-center gap-2">
-                <div class="flex items-center justify-center rounded-md">
-                    <SquareAsterisk class="size-8" />
-                    <SquareAsterisk class="size-8" />
-                    <SquareAsterisk class="size-8" />
-                    <SquareAsterisk class="size-8" />
-                </div>
-                <span class="sr-only">Acme Inc.</span>
-                <!-- <h1 class="text-xl font-bold">Создание ПИН кода {mode}</h1> -->
-                <div class="text-center text-sm">Введите новый ПИН код</div>
+    <div class="flex flex-col gap-4">
+        <div class="flex flex-col items-center">
+            <div class="flex items-center justify-center pb-4">
+                <SquareAsterisk class="size-8" />
+                <SquareAsterisk class="size-8" />
+                <SquareAsterisk class="size-8" />
+                <SquareAsterisk class="size-8" />
             </div>
+            <h1 class="text-xl font-bold pb-2">Введите пароль</h1>
 
-            <!-- PIN Input -->
-            <InputOTP.Root class="flex justify-center gap-6" maxlength={4}>
-                {#snippet children({ cells })}
-                    {#each cells as cell (cell)}
-                        <InputOTP.Group>
-                            <InputOTP.Slot {cell} />
-                        </InputOTP.Group>
-                    {/each}
-                {/snippet}
-            </InputOTP.Root>
+            <Input
+                type="password"
+                placeholder="* * * * * *"
+                class="w-40 h-10 text-center text-xl "
+            />
+        </div>
 
-            <div
-                class="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t"
-            >
-                <span
-                    class="bg-background text-muted-foreground relative z-10 px-2"
-                >Повторите ПИН код</span>
-            </div>
-
-            <!-- PIN Input -->
-            <InputOTP.Root class="flex justify-center gap-6" maxlength={4}>
-                {#snippet children({ cells })}
-                    {#each cells as cell (cell)}
-                        <InputOTP.Group>
-                            <InputOTP.Slot {cell} />
-                        </InputOTP.Group>
-                    {/each}
-                {/snippet}
-            </InputOTP.Root>
-
-            <Separator />
-
-            <div class="flex gap-4">
-                <Button variant="outline" type="button" class="flex-1 transition-all duration-300">
-                    Отмена
-                </Button>
-                <Button variant="default" type="button" class="flex-1 transition-all duration-300">
-                    Сохранить
-                </Button>
-            </div>
+        <div class="flex flex-col items-center">
+            <Button type="button" class="transition-all duration-300">
+                Вход
+            </Button>
         </div>
     </div>
 </div>
