@@ -267,7 +267,7 @@
                         class="flex-1 transition-all duration-300"
                         onclick={createCopy}
                     >
-                        <!-- Сщздать на основе -->
+                        <!-- Создать на основе -->
                         Создать
                     </Button>
                 {/if}

@@ -2,7 +2,7 @@ import { get } from "svelte/store";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { resourceDir, join } from "@tauri-apps/api/path";
 import { encryptData, decryptData } from "$lib/stores/crypto-store";
-import { tasks, settings, currentPass } from "$lib/stores/app-state";
+import { tasks, currentPass } from "$lib/stores/app-state";
 import type { TypesTask } from "$lib/types/types-task";
 
 const TASKS_FILE = "tasks.json";
@@ -14,26 +14,23 @@ async function getFilePath(fileName: string): Promise<string> {
     return await join(dir, fileName);
 }
 
-export async function loadTask(): Promise<void> {
+export async function loadTask(): Promise<boolean> {
     try {
         const path = await getFilePath(TASKS_FILE);
         console.log(`Загрузка задач из: ${path}`);
 
         const content = await readTextFile(path);
         const fileData = JSON.parse(content);
-
-        const appSettings = get(settings);
         const pass = get(currentPass);
-
         const isFileEncrypted = fileData.cipher && fileData.iv;
 
         if (isFileEncrypted) {
             console.log("📦 Найден зашифрованный файл задач.");
 
             if (!pass) {
-                console.warn("⚠️ Пароль не установлен. Невозможно расшифровать задачи.");
+                console.warn("⚠️ Пароль не установлен. Невозможно расшифровать задачи, ждем пароль.");
                 tasks.set([]);
-                return;
+                return false;
             }
 
             const decrypted = await decryptData(fileData.cipher, pass);
@@ -41,24 +38,24 @@ export async function loadTask(): Promise<void> {
             if (decrypted.success && decrypted.data) {
                 tasks.set(decrypted.data);
                 console.log("✅ Задачи успешно расшифрованы и загружены.");
+                return true;
             } else {
                 console.warn("⚠️ Ошибка расшифровки задач. Возможно, пароль неверный.");
                 tasks.set([]);
+                return false;
             }
-        } else if (!appSettings.encryptTasks && !pass) {
-            // Если файл не зашифрован, шифрование отключено, и пароля нет — читаем напрямую
+        } else {
             console.log("📂 Найден незашифрованный файл задач.");
             tasks.set(fileData);
-        } else {
-            console.warn("⚠️ Файл выглядит незашифрованным, но в настройках включено шифрование или указан пароль. Проверка прервана для безопасности.");
-            tasks.set([]);
+            console.log("✅ Задачи успешно загружены из файла.");
         }
     } catch (error) {
-        console.warn(`⚠️ Файл с задачами не найден. Используются значения по умолчанию.`, error);
+        console.warn(`⚠️ Файл с задачами не найден.`, error);
     } finally {
         isInitialized = true;
         console.log("Инициализация задач завершена.");
     }
+    return true; // Возвращаем результат в любом случае
 }
 
 tasks.subscribe((value) => {
@@ -70,15 +67,12 @@ tasks.subscribe((value) => {
 export async function saveTask(data: TypesTask[]): Promise<void> {
     try {
         const path = await getFilePath(TASKS_FILE);
-        const appSettings = get(settings);
+        console.log(`Сохранения задач по пути: ${path}`);
         const pass = get(currentPass);
+        console.log(`Пароль установлен: ${!!pass}`);
 
-        if (appSettings.encryptTasks) {
-            if (!pass || pass.length === 0) {
-                console.warn("⚠️ Пароль не установлен. Задачи не будут сохранены.");
-                return;
-            }
-
+        if (!!pass) {
+            console.warn("⚠️ Пароль установлен. Задачи будут зашифрованы и сохранены.");
             const encrypted = await encryptData(data, pass);
             const content = JSON.stringify(encrypted, null, 2);
             await writeTextFile(path, content);

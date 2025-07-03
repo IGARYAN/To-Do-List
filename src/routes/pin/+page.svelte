@@ -3,6 +3,7 @@
     import { Button } from "$lib/components/ui/button/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { toastStore } from "$lib/stores/toast-store"; // Уведомления
+    import { loadTask } from "$lib/stores/task-store"; // Уведомления
     import { settings, currentPass } from "$lib/stores/app-state";
 
     toastStore.add({

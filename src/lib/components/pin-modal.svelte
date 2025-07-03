@@ -15,18 +15,18 @@
 
     let mode: "create" | "verify" = "create";
 
-    let newPin = "";
-    let confirmPin = "";
-    let inputPin = "";
+    let newPass = "";
+    let confirmPass = "";
+    let inputPass = "";
 
     // Отслеживаем режим при открытии модалки
     $: if (open) {
         const s = get(settings);
-        const pin = get(currentPass);
+        const pass = get(currentPass);
 
-        if (get(settings).encryptTasks && !pin) {
+        if (get(settings).encryptTasks && !pass) {
             mode = "create";
-        } else if (!get(settings).encryptTasks && pin) {
+        } else if (!get(settings).encryptTasks && pass) {
             mode = "verify";
         }
     }
@@ -40,19 +40,19 @@
     }
 
     function resetForm() {
-        newPin = "";
-        confirmPin = "";
-        inputPin = "";
+        newPass = "";
+        confirmPass = "";
+        inputPass = "";
     }
 
-    function savePin() {
-        if (newPin.length !== 4 || confirmPin.length !== 4) return;
-        if (newPin !== confirmPin) {
+    function savePass() {
+        if (newPass.length !== 4 || confirmPass.length !== 4) return;
+        if (newPass !== confirmPass) {
             alert("ПИН коды не совпадают!");
             return;
         }
 
-        currentPass.set(newPin);
+        currentPass.set(newPass);
         forceSwitch(true);
 
         resetForm();
@@ -61,10 +61,10 @@
         dispatch("success");
     }
 
-    function verifyPin() {
-        const pin = get(currentPass);
+    function verifyPass() {
+        const pass = get(currentPass);
 
-        if (inputPin === pin) {
+        if (inputPass === pass) {
             currentPass.set(null);
             forceSwitch(false);
 
@@ -95,7 +95,7 @@
             <InputOTP.Root
                 class="flex justify-center gap-4"
                 maxlength={4}
-                bind:value={newPin}
+                bind:value={newPass}
             >
                 {#snippet children({ cells })}
                     {#each cells as cell (cell)}
@@ -118,7 +118,7 @@
             <InputOTP.Root
                 class="flex justify-center gap-4"
                 maxlength={4}
-                bind:value={confirmPin}
+                bind:value={confirmPass}
             >
                 {#snippet children({ cells })}
                     {#each cells as cell (cell)}
@@ -135,7 +135,7 @@
                 <Button variant="outline" class="flex-1" onclick={cancelDialog}
                     >Отмена</Button
                 >
-                <Button variant="default" class="flex-1" onclick={savePin}
+                <Button variant="default" class="flex-1" onclick={savePass}
                     >Сохранить</Button
                 >
             </div>
@@ -149,7 +149,7 @@
             <InputOTP.Root
                 class="flex justify-center gap-4"
                 maxlength={4}
-                bind:value={inputPin}
+                bind:value={inputPass}
             >
                 {#snippet children({ cells })}
                     {#each cells as cell (cell)}
@@ -166,7 +166,7 @@
                 <Button variant="outline" class="flex-1" onclick={cancelDialog}
                     >Отмена</Button
                 >
-                <Button variant="default" class="flex-1" onclick={verifyPin}
+                <Button variant="default" class="flex-1" onclick={verifyPass}
                     >Подтвердить</Button
                 >
             </div>

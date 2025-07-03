@@ -6,12 +6,16 @@
   import Toaster from "$lib/components/toaster.svelte";
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
   import { loadSettings } from '$lib/stores/settings-store';
+  import { loadTask } from "$lib/stores/task-store";
   import { settings } from "$lib/stores/app-state";
   import { goto } from '$app/navigation';
 
   onMount(async () => {
     console.log("Загружаем настройки...");
     await loadSettings(); // загружаем и применяем в store
+
+    console.log("Загружаем задачи...");
+    await loadTask(); // загружаем задачи
 
     console.log("Восстанавливаем состояние окна...");
     await restoreWindow(); // Восстанавливаем состояние окна
