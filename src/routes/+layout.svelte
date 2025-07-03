@@ -5,17 +5,16 @@
   import { themeStore } from "$lib/stores/theme-store"; // импорт темы
   import Toaster from "$lib/components/toaster.svelte";
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
-  import { loadSettings } from '$lib/stores/settings-store';
+  import { loadSettings } from "$lib/stores/settings-store";
   import { loadTask } from "$lib/stores/task-store";
-  import { settings } from "$lib/stores/app-state";
-  import { goto } from '$app/navigation';
+  import { goto } from "$app/navigation";
 
   onMount(async () => {
     console.log("Загружаем настройки...");
     await loadSettings(); // загружаем и применяем в store
 
     console.log("Загружаем задачи...");
-    await loadTask(); // загружаем задачи
+    const result = await loadTask(); // загружаем задачи
 
     console.log("Восстанавливаем состояние окна...");
     await restoreWindow(); // Восстанавливаем состояние окна
@@ -24,14 +23,10 @@
     await initWindow(); // подписка на событие close-requested
 
     await themeStore.init(); // подписка на тему (она сама применит её к <html>)
-    
-    // const settings = await readSettings();
-    // if ($settings.encryptTasks) {
-    //     goto('/pin'); // Переход на ввод PIN
-    //     // goto('/pin?mode=create'); // Переход на ввод PIN
-    // }
 
-    // goto('/pin'); // Переход на ввод PIN
+    if (!result) {
+      goto("/pass"); // Переход на ввод Pass
+    }
 
     // Ждем полной загрузки DOM
     await new Promise<void>((resolve) => {
@@ -52,7 +47,7 @@
       if (!isVisible) {
         await win.show();
         await win.setFocus();
-        console.log('✅ Окно показано и в фокусе');
+        console.log("✅ Окно показано и в фокусе");
       } else {
         console.log("ℹ️ Окно уже видимо");
       }

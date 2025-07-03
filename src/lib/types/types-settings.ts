@@ -7,7 +7,6 @@ export interface TypesSettings {
     theme: "light" | "dark" | "system";         // Тема оформления
     saveWindowState: boolean;                   // Сохранять состояние окна
     alwaysOnTop: boolean;                       // Всегда поверх всех окон
-    encryptTasks?: boolean;                     // Вход с паролем и шифрование задач
 
     // Состояние окна:
     windowState?: {

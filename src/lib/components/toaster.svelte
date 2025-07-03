@@ -49,7 +49,7 @@
 </script>
 
 <!-- Контейнер для уведомлений -->
-<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+<div class="fixed bottom-4 right-4 z-500 flex flex-col gap-2 max-w-sm">
   {#each toasts as toast (toast.id)}
     {@const SvelteComponent = getIcon(toast.variant)}
     <div

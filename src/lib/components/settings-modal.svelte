@@ -7,90 +7,55 @@
   import { Switch } from "$lib/components/ui/switch/index.js";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { slide } from "svelte/transition";
-  import {
-    settings,
-    isSettingsModalOpen,
-    currentPass,
-    isPinModalOpen,
-  } from "$lib/stores/app-state";
+  import { settings } from "$lib/stores/app-state";
   import { get, writable } from "svelte/store";
-  import PinModal from "$lib/components/pin-modal.svelte"; // Модальное окно ПИН кода
+  import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
 
   // Локальные копии полей
+  let isSettingsModalOpen = false;
+
   let autoDeleteDays = writable(7);
   let futureDays = writable(7);
   let saveWindowState = writable(false);
-  let encryptTasks = writable(false);
 
-  let isSavePending = false; // флаг для ожидания завершения работы с пин-кодом
-
-  // Ошибки
-  let autoDeleteError = writable("");
-  let futureDaysError = writable("");
-
-  $: if ($isSettingsModalOpen) {
-    // При открытии модалки загружаем актуальные настройки
+  // При открытии модалки загружаем актуальные настройки
+  $: if (isSettingsModalOpen) {
     const s = get(settings);
     autoDeleteDays.set(s.autoDeleteDays);
     futureDays.set(s.futureDays);
     saveWindowState.set(s.saveWindowState ?? false);
-    encryptTasks.set(s.encryptTasks ?? false);
-
-    autoDeleteError.set("");
-    futureDaysError.set("");
   }
 
   function validate() {
-    let valid = true;
     const autoDelete = Number(get(autoDeleteDays));
     if (autoDelete < 1 || autoDelete > 365) {
-      autoDeleteError.set("Введите число от 1 до 365");
-      valid = false;
-    } else {
-      autoDeleteError.set("");
+      toastStore.add({
+        title: "Ошибка - Автоудаление задач",
+        description: "Введите число от 1 до 365",
+        variant: "destructive",
+      });
+      return false;
     }
 
     const futureD = Number(get(futureDays));
     if (futureD < 1 || futureD > 365) {
-      futureDaysError.set("Введите число от 1 до 365");
-      valid = false;
-    } else {
-      futureDaysError.set("");
+      toastStore.add({
+        title: "Ошибка - Показ ближайших задач",
+        description: "Введите число от 1 до 365",
+        variant: "destructive",
+      });
+      return false;
     }
-
-    return valid;
-  }
-
-  function preSaveSettings() {
-    if (!validate()) return;
-
-    const pin = get(currentPass);
-
-    if (get(encryptTasks) && !pin) {
-      $isPinModalOpen = true;
-      isSavePending = true;
-      return;
-    }
-
-    if (!get(encryptTasks) && pin) {
-      $isPinModalOpen = true;
-      isSavePending = true;
-      return;
-    }
-
-    saveSettings();
+    return true;
   }
 
   function saveSettings() {
     if (!validate()) return;
-
     settings.update((s) => ({
       ...s,
       autoDeleteDays: Number(get(autoDeleteDays)),
       futureDays: Number(get(futureDays)),
       saveWindowState: get(saveWindowState),
-      encryptTasks: get(encryptTasks),
     }));
 
     toastStore.add({
@@ -99,41 +64,26 @@
       variant: "default",
     });
 
-    isSettingsModalOpen.set(false);
+    isSettingsModalOpen = false;
   }
 
   function closeSettings() {
-    const s = get(settings);
-    autoDeleteDays.set(s.autoDeleteDays);
-    futureDays.set(s.futureDays);
-    saveWindowState.set(s.saveWindowState ?? false);
-    encryptTasks.set(s.encryptTasks ?? false);
-
-    autoDeleteError.set("");
-    futureDaysError.set("");
-
-    isSettingsModalOpen.set(false);
+    isSettingsModalOpen = false;
   }
 
   function handleOpenAutoFocus(event: Event) {
     event.preventDefault(); // предотвращаем автофокус
-  }
-
-  function handlePinCancel() {
-    isSavePending = false;
-    encryptTasks.update((value) => !value);
-    isPinModalOpen.set(false);
   }
 </script>
 
 <Tooltip.Provider delayDuration={1000}>
   <Tooltip.Root>
     <Tooltip.Trigger
-      onclick={() => ($isSettingsModalOpen = true)}
+      onclick={() => (isSettingsModalOpen = true)}
       class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
     >
       <Settings class="h-4 w-4" />
-      <Dialog.Root open={$isSettingsModalOpen} onOpenChange={closeSettings}>
+      <Dialog.Root open={isSettingsModalOpen} onOpenChange={closeSettings}>
         <Dialog.Content
           class="sm:max-w-md"
           onOpenAutoFocus={handleOpenAutoFocus}
@@ -168,14 +118,7 @@
               <span class="pl-3 pr-1">дней.</span>
             </div>
           </div>
-          {#if $autoDeleteError}
-            <div
-              transition:slide={{ duration: 500 }}
-              class="text-red-500 text-sm pl-1"
-            >
-              {$autoDeleteError}
-            </div>
-          {/if}
+
           <Dialog.Description class="pl-1">
             Выполненные задачи будут автоматически удаляться через указанное
             количество дней.
@@ -202,14 +145,7 @@
               <span class="pl-3 pr-1">дней.</span>
             </div>
           </div>
-          {#if $futureDaysError}
-            <div
-              transition:slide={{ duration: 500 }}
-              class="text-red-500 text-sm pl-1"
-            >
-              {$futureDaysError}
-            </div>
-          {/if}
+
           <Dialog.Description class="pl-1">
             Показывать будущие задачи на указанное количество дней вперед.
           </Dialog.Description>
@@ -221,22 +157,11 @@
             <Switch bind:checked={$saveWindowState} />
           </div>
 
-          <!-- <Dialog.Description class="pl-1">
-      При запуске, приложение будет восстанавливать размер и положение окна.
-    </Dialog.Description> -->
-
-          <!-- <Separator /> -->
-
-          <div class="flex items-center justify-between">
-            <span class="pl-1">Включить шифрование задач c (ПИН) кодом.</span>
-            <Switch bind:checked={$encryptTasks} />
-          </div>
-
-          <!-- <Dialog.Description class="pl-1">
-      При запуске, приложение будет запрашивать (ПИН КОД) для доступа к задачам.
-    </Dialog.Description> -->
-
           <Separator />
+
+          <div class="flex gap-4">
+            <PasswordModal />
+          </div>
 
           <!-- Кнопки действий -->
           <div class="flex gap-4">
@@ -248,7 +173,7 @@
               Отмена
             </Button>
             <Button
-              onclick={preSaveSettings}
+              onclick={saveSettings}
               class="flex-1 transition-all duration-300"
             >
               Сохранить
@@ -262,13 +187,3 @@
     </Tooltip.Content>
   </Tooltip.Root>
 </Tooltip.Provider>
-
-<PinModal
-  bind:open={$isPinModalOpen}
-  {isSavePending}
-  on:success={() => {
-    saveSettings();
-    isSavePending = false;
-  }}
-  on:cancel={handlePinCancel}
-/>
