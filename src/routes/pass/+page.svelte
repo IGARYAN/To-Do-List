@@ -7,7 +7,7 @@
     import { loadTask } from "$lib/stores/task-store";
     import { goto } from '$app/navigation';
 
-    let password = "";
+    let password = $state("");
 
     const validatePassword = (pass: string) => {
         pass = pass.trim().replace(/\s+/g, "");

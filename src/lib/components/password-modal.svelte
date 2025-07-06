@@ -9,22 +9,10 @@
     import { Input } from "$lib/components/ui/input/index.js";
     import { saveTask } from "$lib/stores/task-store";
 
-    let mode: "create" | "verify" = "create";
-
-    let isPassModalOpen = false;
-    let newPass = "";
-    let confirmPass = "";
-    let inputPass = "";
-
-    // Отслеживаем режим при открытии модалки
-    $: if (isPassModalOpen) {
-        const pass = get(currentPass);
-        if (!!pass) {
-            mode = "verify";
-        } else {
-            mode = "create";
-        }
-    }
+    let isPassModalOpen = $state(false);
+    let newPass = $state("");
+    let confirmPass = $state("");
+    let inputPass = $state("");
 
     function cancelDialog() {
         resetForm();
@@ -97,8 +85,7 @@
     // Проверка пароля для отключения входа с паролем
     function verifyPass() {
         if (!validatePassword(inputPass)) return;
-        const pass = get(currentPass);
-        if (inputPass === pass) {
+        if (inputPass === $currentPass) {
             currentPass.set(null);
             saveTask(get(tasks)); // Пересохраняем файл в незашифрованном виде
             toastStore.add({
@@ -122,19 +109,19 @@
     <Dialog.Trigger
         onclick={() => (isPassModalOpen = true)}
         class={`flex-1 transition-all duration-300 ${
-            !!$currentPass
+            $currentPass
                 ? buttonVariants({ variant: "default" })
                 : buttonVariants({ variant: "outline" })
         }`}
     >
-        {#if !!$currentPass}
+        {#if $currentPass}
             Отключить вход с паролем
         {:else}
             Включить вход с паролем
         {/if}
     </Dialog.Trigger>
     <Dialog.Content class="w-sm">
-        {#if mode === "create"}
+        {#if !$currentPass}
             <div class="flex flex-col items-center gap-2">
                 <div class="flex items-center justify-center rounded-sm">
                     <SquareAsterisk class="size-6" />
@@ -186,7 +173,7 @@
                     >Сохранить</Button
                 >
             </div>
-        {:else if mode === "verify"}
+        {:else}
             <div class="flex flex-col items-center gap-2">
                 <div class="flex items-center justify-center rounded-sm">
                     <SquareAsterisk class="size-6" />

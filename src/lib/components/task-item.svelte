@@ -1,33 +1,54 @@
 <script lang="ts">
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
-  import { Calendar, Edit, Trash2, CheckCircle2, Circle } from "lucide-svelte"; // Иконки
+  import { Calendar, CheckCircle2, Circle } from "lucide-svelte"; // Иконки
   import { Button } from "$lib/components/ui/button/index.js"; // Кнопки
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
+  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
+  import { toastStore } from "$lib/stores/toast-store"; // Уведомления
+  import { tasks } from "$lib/stores/app-state";
 
-  /*
-    Получаем пропсы компонента с использованием Svelte 5 $props рун
-    Пропсы:
-    - task: объект задачи для отображения
-    - onToggle: функция для переключения статуса выполнения
-    - onEdit: функция для открытия редактирования задачи
-    - onDelete: функция для открытия диалога удаления
-  */
-  let {
-    task,
-    onToggle,
-    onEdit,
-  }: {
-    task: TypesTask;
-    onToggle: (id: string) => void;
-    onEdit: (task: TypesTask) => void;
-  } = $props();
+  // export let task: string;
+  let { task } = $props();
 
   // Реактивное состояние для отображения кнопок действий при наведении
   let isHovered = $state(false);
+
+  /*
+    Переключение статуса выполнения задачи
+    - Инвертирует статус completed
+    - Устанавливает время выполнения при отметке как выполненная
+    - Показывает соответствующее уведомление
+  */
+  function toggleTask(id: string) {
+    let updatedTask: TypesTask | undefined;
+
+    $tasks = $tasks.map((task) => {
+      if (task.id === id) {
+        const isNowCompleted = !task.completed;
+        updatedTask = {
+          ...task,
+          completed: isNowCompleted,
+          completedAt: isNowCompleted ? new Date().toISOString() : undefined,
+        };
+        return updatedTask;
+      }
+      return task;
+    });
+
+    if (updatedTask) {
+      toastStore.add({
+        title: updatedTask.completed
+          ? "Задача выполнена"
+          : "Задача не выполнена",
+        description: `Задача "${updatedTask.title}" ${updatedTask.completed ? "отмечена как выполненная." : "отмечена как невыполненная."}`,
+        variant: "default",
+      });
+    }
+  }
 
   /*
     Подготовка дат для сравнения
@@ -79,7 +100,7 @@
     <Button
       variant="ghost"
       size="icon"
-      onclick={() => onToggle(task.id)}
+      onclick={() => toggleTask(task.id)}
       class="h-8 w-8 p-0 hover:bg-transparent"
       aria-label={task.completed
         ? "Отметить как невыполненную"
@@ -152,18 +173,10 @@
       }`}
     >
       <!-- Кнопка редактирования -->
-      <Button
-        variant="ghost"
-        size="icon"
-        onclick={() => onEdit(task)}
-        class="h-8 w-8"
-        aria-label="Редактировать задачу"
-      >
-        <Edit class="h-4 w-4" />
-      </Button>
+      <EditTaskModal editTask={task} />
 
       <!-- Кнопка удаления -->
-      <DeleteConfirmDialog id={task.id} taskTitle={task.title} />
+      <DeleteConfirmDialog delTask={task} />
     </div>
   </div>
 </Card.Root>

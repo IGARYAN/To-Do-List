@@ -4,7 +4,7 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar, Plus } from "@lucide/svelte";
+    import { Calendar, Plus } from "lucide-svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
@@ -17,14 +17,15 @@
         getLocalTimeZone,
         CalendarDate,
     } from "@internationalized/date";
-    import { v4 as uuidv4 } from 'uuid';
+    import { v4 as uuidv4 } from "uuid";
 
-    let isCreateTaskModalOpen = false;
-    let isPopoverOpen = false;
+    let isCreateTaskModalOpen = $state(false);
+    let isPopoverOpen = $state(false);
 
-    let value: CalendarDate | undefined;
-    let title = "";
-    let description = "";
+    // Реактивные переменные
+    let value = $state<CalendarDate | undefined>(undefined);
+    let title = $state("");
+    let description = $state("");
 
     const formatter = new DateFormatter("ru-RU", {
         day: "numeric",
@@ -69,14 +70,14 @@
                 title: title.trim(),
                 description: description.trim() || undefined,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: false
+                completed: false,
             };
 
-            $tasks = [...$tasks, newTask];
-            
+            tasks.update((currentTasks) => [...currentTasks, newTask]);
+
             toastStore.add({
-                title: "Успех",
-                description: "Задача успешно добавлена!",
+                title: "Создание задачи",
+                description: `Задача "${newTask.title}" успешно создана и добавлена в список задач!`,
                 variant: "default",
             });
 
@@ -93,9 +94,11 @@
     }
 
     // Автоматическое закрытие поповера при выборе даты
-    $: if (value) {
-        isPopoverOpen = false;
-    }
+    $effect(() => {
+        if (value) {
+            isPopoverOpen = false;
+        }
+    });
 </script>
 
 <Tooltip.Provider delayDuration={1000}>
@@ -199,4 +202,3 @@
         </div>
     </Dialog.Content>
 </Dialog.Root>
-

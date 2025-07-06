@@ -6,10 +6,9 @@
   import { toastStore } from "$lib/stores/toast-store";
   import { get } from "svelte/store";
 
-  export let id: string;
-  export let taskTitle: string;
+  let { delTask } = $props();
 
-  let isDeleteConfirmDialogOpen = false;
+  let isDeleteConfirmDialogOpen = $state(false);
 
   /*
     Удаление задачи
@@ -18,11 +17,11 @@
   */
   function deleteTask() {
     const currentTasks = get(tasks);
-    tasks.set(currentTasks.filter(task => task.id !== id));
+    tasks.set(currentTasks.filter(task => task.id !== delTask.id));
 
     toastStore.add({
         title: "Удаление задачи",
-        description: `Задача "${taskTitle}" успешно удалена.`,
+        description: `Задача "${delTask.title}" успешно удалена.`,
         variant: "default",
       });
 
@@ -48,7 +47,7 @@
     <div class="py-0">
       <p class="text-md text-muted-foreground">
         Вы уверены, что хотите удалить задачу <span class="font-semibold"
-          >"{taskTitle}"</span
+          >"{delTask.title}"</span
         >?
         <br />
         <span class="text-red-500">Это действие нельзя отменить.</span>
