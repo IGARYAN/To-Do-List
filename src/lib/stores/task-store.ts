@@ -4,8 +4,6 @@ import { resourceDir, join } from "@tauri-apps/api/path";
 import { encryptData, decryptData } from "$lib/stores/crypto-store";
 import { tasks, currentPass } from "$lib/stores/app-state";
 import type { TypesTask } from "$lib/types/types-task";
-import { goto } from '$app/navigation';
-import { toastStore } from "$lib/stores/toast-store";
 
 const TASKS_FILE = "tasks.json";
 
@@ -31,7 +29,6 @@ export async function loadTask(): Promise<boolean> {
 
             if (!pass) {
                 console.warn("⚠️ Пароль не установлен. Невозможно расшифровать задачи, ожидаем пароль.");
-                // tasks.set([]);
                 return false;
             }
 
@@ -40,24 +37,32 @@ export async function loadTask(): Promise<boolean> {
             if (decrypted.success && decrypted.data) {
                 tasks.set(decrypted.data);
                 console.log("✅ Задачи успешно расшифрованы и загружены.");
+                if (!isInitialized) {
+                    isInitialized = true;
+                    console.log("Инициализация задач завершена.");
+                }
                 return true;
             } else {
                 console.warn("⚠️ Ошибка расшифровки задач. Возможно, пароль неверный.");
-                // tasks.set([]);
                 return false;
             }
         } else {
             console.log("📂 Найден незашифрованный файл задач.");
             tasks.set(fileData);
             console.log("✅ Задачи успешно загружены из файла.");
+            if (!isInitialized) {
+                isInitialized = true;
+                console.log("Инициализация задач завершена.");
+            }
             return true;
         }
     } catch (error) {
         console.warn(`⚠️ Файл с задачами не найден.`, error);
+        if (!isInitialized) {
+            isInitialized = true;
+            console.log("Инициализация задач завершена.");
+        }
         return true;
-    } finally {
-        isInitialized = true;
-        console.log("Инициализация задач завершена.");
     }
 }
 
@@ -67,28 +72,6 @@ tasks.subscribe((value) => {
     saveTask(value);
 });
 
-currentPass.subscribe(async (value) => {
-    if (!isInitialized) return;
-
-    if (!!value) {
-        console.log("🔐 Попытка расшифровать задачи с новым паролем...");
-        const success = await loadTask();
-
-        if (success) {
-            console.log("✅ Пароль принят, задачи загружены.");
-            goto('/'); // Переход на главную
-        } else {
-            console.warn("❌ Пароль неверный. Ждём новый ввод.");
-            toastStore.add({
-                title: "Ошибка",
-                description: "Неверный пароль",
-                variant: "destructive",
-            });
-        }
-    } else {
-        saveTask(get(tasks));
-    }
-});
 
 export async function saveTask(data: TypesTask[]): Promise<void> {
     try {

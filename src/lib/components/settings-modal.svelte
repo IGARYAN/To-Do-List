@@ -80,7 +80,7 @@
   <Tooltip.Root>
     <Tooltip.Trigger
       onclick={() => (isSettingsModalOpen = true)}
-      class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
+      class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
     >
       <Settings class="h-4 w-4" />
       <Dialog.Root open={isSettingsModalOpen} onOpenChange={closeSettings}>

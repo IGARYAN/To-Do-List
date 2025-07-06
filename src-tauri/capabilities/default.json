@@ -39,6 +39,7 @@
     "core:webview:allow-webview-show",
     "core:webview:allow-webview-hide",
     "core:webview:allow-create-webview",
+    "core:webview:allow-set-webview-focus",
     "core:window:default",
     "core:window:allow-show",
     "core:window:allow-hide",
@@ -68,6 +69,7 @@
     "core:window:allow-set-resizable",
     "core:window:allow-toggle-maximize",
     "core:window:allow-set-focus",
+    "core:window:allow-is-focused",
     "core:window:allow-set-title"
   ]
 }

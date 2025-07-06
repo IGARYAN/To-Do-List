@@ -1,12 +1,13 @@
 <script lang="ts">
     import { get } from "svelte/store";
-    import { currentPass } from "$lib/stores/app-state";
+    import { currentPass, tasks } from "$lib/stores/app-state";
     import { SquareAsterisk } from "lucide-svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toastStore } from "$lib/stores/toast-store";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
+    import { saveTask } from "$lib/stores/task-store";
 
     let mode: "create" | "verify" = "create";
 
@@ -73,6 +74,7 @@
     // Сохраняем новый пароль для включения входа с паролем
     function savePass() {
         if (!validatePassword(newPass)) return;
+        if (!validatePassword(confirmPass)) return;
         if (newPass !== confirmPass) {
             toastStore.add({
                 title: "Ошибка",
@@ -82,6 +84,7 @@
             return;
         }
         currentPass.set(newPass);
+        saveTask(get(tasks)); // Пересохраняем файл в зашифрованном виде
         toastStore.add({
             title: "Создание пароля",
             description: "Новый пароль успешно создан.",
@@ -97,6 +100,7 @@
         const pass = get(currentPass);
         if (inputPass === pass) {
             currentPass.set(null);
+            saveTask(get(tasks)); // Пересохраняем файл в незашифрованном виде
             toastStore.add({
                 title: "Верификация пароля",
                 description: "Вход с паролем успешно отключен.",
@@ -119,8 +123,8 @@
         onclick={() => (isPassModalOpen = true)}
         class={`flex-1 transition-all duration-300 ${
             !!$currentPass
-                ? buttonVariants({ variant: "default", size: "icon" })
-                : buttonVariants({ variant: "outline", size: "icon" })
+                ? buttonVariants({ variant: "default" })
+                : buttonVariants({ variant: "outline" })
         }`}
     >
         {#if !!$currentPass}

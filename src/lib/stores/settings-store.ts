@@ -27,7 +27,6 @@ export async function loadSettings(): Promise<void> {
     console.log("✅ Настройки успешно загружены из файла.");
   } catch (error) {
     console.warn(`⚠️ Файл настроек не найден, используются настройки по умолчанию.`, error);
-    // Если файла нет — просто продолжаем с текущими значениями store.
   } finally {
     isInitialized = true; // Считаем, что инициализация завершена
     console.log("Инициализация настроек завершена");

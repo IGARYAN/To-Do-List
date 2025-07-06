@@ -4,47 +4,27 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar } from "@lucide/svelte";
+    import { Calendar, Plus } from "@lucide/svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
+    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
+    import { tasks } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
         getLocalTimeZone,
         CalendarDate,
     } from "@internationalized/date";
+    import { v4 as uuidv4 } from 'uuid';
 
-    // Пропсы компонента
-    export let isOpen = false;
-    export let onClose: () => void;
-    export let onSave: (
-        task: TypesTask | Omit<TypesTask, "id">,
-    ) => Promise<void> = async () => {};
-    export let task: TypesTask | null = null;
-
+    let isCreateTaskModalOpen = false;
     let isPopoverOpen = false;
+
     let value: CalendarDate | undefined;
     let title = "";
     let description = "";
-    let taskSaving = false;
-
-    // Инициализация формы при изменении задачи или открытии
-    $: if (isOpen || task) {
-        if (task) {
-            title = task.title;
-            description = task.description || "";
-            const taskDate = new Date(task.date);
-            value = new CalendarDate(
-                taskDate.getFullYear(),
-                taskDate.getMonth() + 1,
-                taskDate.getDate(),
-            );
-        } else {
-            resetForm();
-        }
-    }
 
     const formatter = new DateFormatter("ru-RU", {
         day: "numeric",
@@ -58,25 +38,14 @@
         value = undefined;
     }
 
-    // Сброс формы при закрытии диалога
-    $: if (!isOpen) {
-        resetForm();
-    }
-
-    // Автоматическое закрытие поповера при выборе даты
-    $: if (value) {
-        isPopoverOpen = false;
-    }
-
     function validate(): boolean {
-        let ok = true;
         if (!title.trim()) {
             toastStore.add({
                 title: "Ошибка",
                 description: "Название задачи обязательно!",
                 variant: "destructive",
             });
-            ok = false;
+            return false;
         }
 
         if (!value) {
@@ -85,31 +54,34 @@
                 description: "Укажите дату выполнения!",
                 variant: "destructive",
             });
-            ok = false;
+            return false;
         }
-        return ok;
+
+        return true;
     }
 
-    async function taskSave() {
+    async function saveTask() {
         if (!validate()) return;
 
-        taskSaving = true;
         try {
-            if (!value) {
-                throw new Error("Дата не указана");
-            }
-
-            const taskData = {
-                title,
-                description,
-                date: value.toDate(getLocalTimeZone()).toISOString(),
-                completed: false,
+            const newTask: TypesTask = {
+                id: uuidv4(),
+                title: title.trim(),
+                description: description.trim() || undefined,
+                date: value!.toDate(getLocalTimeZone()).toISOString(),
+                completed: false
             };
 
-            const resultTask = task ? { ...task, ...taskData } : taskData;
+            $tasks = [...$tasks, newTask];
+            
+            toastStore.add({
+                title: "Успех",
+                description: "Задача успешно добавлена!",
+                variant: "default",
+            });
 
-            await onSave(resultTask);
-            onClose();
+            isCreateTaskModalOpen = false;
+            resetForm();
         } catch (e) {
             toastStore.add({
                 title: "Ошибка",
@@ -117,50 +89,37 @@
                 variant: "destructive",
             });
             console.error(e);
-        } finally {
-            taskSaving = false;
         }
     }
 
-    async function createCopy() {
-        if (!validate()) return;
-
-        taskSaving = true;
-        try {
-            if (!value) {
-                throw new Error("Дата не указана");
-            }
-
-            const taskData = {
-                title,
-                description,
-                date: value.toDate(getLocalTimeZone()).toISOString(),
-                completed: false,
-            };
-
-            // ВАЖНО: Передаём без id, чтобы создать новую
-            await onSave(taskData);
-            onClose();
-        } catch (e) {
-            toastStore.add({
-                title: "Ошибка",
-                description: "Ошибка при создании копии задачи!",
-                variant: "destructive",
-            });
-            console.error(e);
-        } finally {
-            taskSaving = false;
-        }
+    // Автоматическое закрытие поповера при выборе даты
+    $: if (value) {
+        isPopoverOpen = false;
     }
 </script>
 
-<Dialog.Root open={isOpen} onOpenChange={onClose}>
+<Tooltip.Provider delayDuration={1000}>
+    <Tooltip.Root>
+        <Tooltip.Trigger
+            onclick={() => {
+                isCreateTaskModalOpen = true;
+                resetForm();
+            }}
+            class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
+        >
+            <Plus class="h-4 w-4" />
+        </Tooltip.Trigger>
+
+        <Tooltip.Content>
+            <p>Добавить новую задачу</p>
+        </Tooltip.Content>
+    </Tooltip.Root>
+</Tooltip.Provider>
+
+<Dialog.Root bind:open={isCreateTaskModalOpen}>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
-            <Dialog.Title>
-                <!-- Новая задача -->
-                {task ? "Редактировать задачу" : "Новая задача"}
-            </Dialog.Title>
+            <Dialog.Title>Новая задача</Dialog.Title>
         </Dialog.Header>
 
         <div class="space-y-4">
@@ -227,27 +186,17 @@
             <div class="flex gap-4">
                 <Dialog.Close
                     class={`flex-1 transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
-                    
-                    >Отмена</Dialog.Close
                 >
+                    Отмена
+                </Dialog.Close>
                 <Button
                     class="flex-1 transition-all duration-300"
-                    onclick={taskSave}
+                    onclick={saveTask}
                 >
-                    <!-- Сохранить -->
-                    {task ? "Сохранить" : "Создать"}
+                    Создать
                 </Button>
-                {#if task}
-                    <Button
-                        variant="outline"
-                        class="flex-1 transition-all duration-300"
-                        onclick={createCopy}
-                    >
-                        <!-- Создать на основе -->
-                        Создать
-                    </Button>
-                {/if}
             </div>
         </div>
     </Dialog.Content>
 </Dialog.Root>
+

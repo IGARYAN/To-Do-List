@@ -18,7 +18,8 @@
     "@tauri-apps/plugin-opener": "^2",
     "date-fns": "^4.1.0",
     "lucide-svelte": "^0.518.0",
-    "tailwindcss": "^4.1.10"
+    "tailwindcss": "^4.1.10",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@internationalized/date": "^3.8.2",
@@ -29,6 +30,7 @@
     "@tailwindcss/vite": "^4.1.10",
     "@tauri-apps/cli": "^2",
     "@types/node": "^24.0.3",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
     "bits-ui": "^2.8.7",
     "clsx": "^2.1.1",

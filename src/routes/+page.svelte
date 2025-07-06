@@ -2,13 +2,12 @@
   // Импорты компонентов
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
   import TaskModal from "$lib/components/task-modal.svelte"; // Модальное окно задачи
+  import CreateTaskModal from "$lib/components/create-task-modal.svelte"; // Модальное окно задачи
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
-  import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte"; // Диалог подтверждения удаления
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import type { TypesTask } from "$lib/types/types-task"; // Типы данных
-  import type { TypesSettings } from "$lib/types/types-settings"; // Типы данных
   import { buttonVariants } from "$lib/components/ui/button"; // Кнопки UI
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
@@ -21,7 +20,6 @@
     CardTitle,
   } from "$lib/components/ui/card"; // Карточки UI
   import {
-    Plus,
     CircleX,
     Calendar,
     Clock,
@@ -32,12 +30,10 @@
   import {
     isSingleColumn,
     isTaskModalOpen,
-    isDeleteDialogOpen,
     editingTask,
-    taskToDelete,
     currentTime,
     tasks,
-    settings
+    settings,
   } from "$lib/stores/app-state";
 
   // import { TrayIcon } from "@tauri-apps/api/tray";
@@ -174,7 +170,7 @@
   */
   function updateTask(updatedTask: TypesTask) {
     $tasks = $tasks.map((task) =>
-      task.id === updatedTask.id ? updatedTask : task
+      task.id === updatedTask.id ? updatedTask : task,
     );
 
     toastStore.add({
@@ -182,24 +178,6 @@
       description: `Задача "${updatedTask.title}" успешно изменена.`,
       variant: "default",
     });
-  }
-
-  /*
-    Удаление задачи
-    - Удаляет задачу из хранилища по ID
-    - Показывает уведомление об удалении
-  */
-  function deleteTask(id: string) {
-    const taskToRemove = $tasks.find((task) => task.id === id);
-    $tasks = $tasks.filter((task) => task.id !== id);
-
-    if (taskToRemove) {
-      toastStore.add({
-        title: "Удаление задачи",
-        description: `Задача "${taskToRemove.title}" успешно удалена.`,
-        variant: "destructive",
-      });
-    }
   }
 
   /*
@@ -249,27 +227,6 @@
   function closeTaskModal() {
     $isTaskModalOpen = false;
     $editingTask = null;
-  }
-
-  // Открытие диалога подтверждения удаления
-  function openDeleteDialog(task: TypesTask) {
-    $taskToDelete = task;
-    $isDeleteDialogOpen = true;
-  }
-
-  // Подтверждение удаления задачи
-  function confirmDelete() {
-    if ($taskToDelete) {
-      deleteTask($taskToDelete.id);
-      $taskToDelete = null;
-      $isDeleteDialogOpen = false;
-    }
-  }
-
-  // Отмена удаления задачи
-  function cancelDelete() {
-    $taskToDelete = null;
-    $isDeleteDialogOpen = false;
   }
 
   /*
@@ -371,25 +328,10 @@
 
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
-        <AlwaysOnTop />
+        <CreateTaskModal />
         <ThemeToggle />
+        <AlwaysOnTop />
         <SettingsModal />
-
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => ($isTaskModalOpen = true)}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "default" })}`}
-            >
-              <Plus class="h-4 w-4" />
-              Добавить
-            </Tooltip.Trigger>
-
-            <Tooltip.Content>
-              <p>Добавить новую задачу</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
       </div>
     </div>
 
@@ -476,12 +418,7 @@
           <CardContent class="px-4">
             <div class="space-y-2">
               {#each futureTasks as task (task.id)}
-                <TaskItem
-                  {task}
-                  onToggle={toggleTask}
-                  onEdit={openEditModal}
-                  onDelete={openDeleteDialog}
-                />
+                <TaskItem {task} onToggle={toggleTask} onEdit={openEditModal} />
               {/each}
             </div>
           </CardContent>
@@ -514,12 +451,7 @@
           <!-- Просроченные и сегодняшние задачи -->
           <div class="space-y-2">
             {#each [...overdueTasks, ...todayTasks] as task (task.id)}
-              <TaskItem
-                {task}
-                onToggle={toggleTask}
-                onEdit={openEditModal}
-                onDelete={openDeleteDialog}
-              />
+              <TaskItem {task} onToggle={toggleTask} onEdit={openEditModal} />
             {/each}
           </div>
         </CardContent>
@@ -543,12 +475,7 @@
           <CardContent class="px-4">
             <div class="space-y-2">
               {#each completedTasks as task (task.id)}
-                <TaskItem
-                  {task}
-                  onToggle={toggleTask}
-                  onEdit={openEditModal}
-                  onDelete={openDeleteDialog}
-                />
+                <TaskItem {task} onToggle={toggleTask} onEdit={openEditModal} />
               {/each}
             </div>
           </CardContent>
@@ -562,14 +489,6 @@
       onClose={closeTaskModal}
       onSave={handleSave}
       task={$editingTask}
-    />
-
-    <!-- Диалог подтверждения удаления -->
-    <DeleteConfirmDialog
-      isOpen={$isDeleteDialogOpen}
-      onConfirm={confirmDelete}
-      onCancel={cancelDelete}
-      taskTitle={$taskToDelete?.title || ""}
     />
   </div>
 </div>

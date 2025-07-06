@@ -1,36 +1,49 @@
 <script lang="ts">
-  import { AlertTriangle } from "lucide-svelte";
-  import { Button } from "$lib/components/ui/button/index.js";
-  import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-  } from "$lib/components/ui/dialog";
+  import { AlertTriangle, Trash2 } from "lucide-svelte";
+  import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import { tasks } from "$lib/stores/app-state";
+  import { toastStore } from "$lib/stores/toast-store";
+  import { get } from "svelte/store";
 
-  // Пропсы компонента
-  let {
-    isOpen,
-    onConfirm,
-    onCancel,
-    taskTitle,
-  }: {
-    isOpen: boolean; // Открыт ли диалог
-    onConfirm: () => void; // Функция подтверждения удаления
-    onCancel: () => void; // Функция отмены удаления
-    taskTitle: string; // Название задачи для отображения
-  } = $props();
+  export let id: string;
+  export let taskTitle: string;
+
+  let isDeleteConfirmDialogOpen = false;
+
+  /*
+    Удаление задачи
+    - Удаляет задачу из хранилища по ID
+    - Показывает уведомление об удалении
+  */
+  function deleteTask() {
+    const currentTasks = get(tasks);
+    tasks.set(currentTasks.filter(task => task.id !== id));
+
+    toastStore.add({
+        title: "Удаление задачи",
+        description: `Задача "${taskTitle}" успешно удалена.`,
+        variant: "default",
+      });
+
+    isDeleteConfirmDialogOpen = false;
+  }
 </script>
 
-<Dialog open={isOpen} onOpenChange={onCancel}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle class="flex items-center gap-2">
+<Dialog.Root open={isDeleteConfirmDialogOpen} onOpenChange={() => (isDeleteConfirmDialogOpen = false)}>
+  <Dialog.Trigger onclick={() => { isDeleteConfirmDialogOpen = true; }}
+    class={`h-8 w-8 text-red-500 hover:text-red-600 ${buttonVariants({ variant: "ghost", size: "icon" })}`}
+    aria-label="Удалить задачу"
+  >
+    <Trash2 class="h-4 w-4" />
+  </Dialog.Trigger>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title class="flex items-center gap-2">
         <AlertTriangle class="h-5 w-5 text-red-500" />
         Подтвердите удаление
-      </DialogTitle>
-    </DialogHeader>
+      </Dialog.Title>
+    </Dialog.Header>
 
     <div class="py-0">
       <p class="text-md text-muted-foreground">
@@ -42,20 +55,19 @@
       </p>
     </div>
 
-    <DialogFooter>
+    <Dialog.Footer>
       <!-- Кнопка отмены -->
-      <Button
-        variant="outline"
-        onclick={onCancel}
-        class="transition-all duration-200"
+
+      <Dialog.Close
+        class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
       >
         Отмена
-      </Button>
+      </Dialog.Close>
 
       <!-- Кнопка подтверждения удаления -->
-      <Button onclick={onConfirm} class="transition-all duration-200">
+      <Button onclick={deleteTask} class="transition-all duration-300">
         Удалить
       </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>

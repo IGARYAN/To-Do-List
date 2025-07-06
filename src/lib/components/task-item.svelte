@@ -6,6 +6,7 @@
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
+  import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
 
   /*
     Получаем пропсы компонента с использованием Svelte 5 $props рун
@@ -19,12 +20,10 @@
     task,
     onToggle,
     onEdit,
-    onDelete,
   }: {
     task: TypesTask;
     onToggle: (id: string) => void;
     onEdit: (task: TypesTask) => void;
-    onDelete: (task: TypesTask) => void;
   } = $props();
 
   // Реактивное состояние для отображения кнопок действий при наведении
@@ -143,7 +142,6 @@
             >Завтра</Badge
           >
         {/if}
-
       </div>
     </div>
 
@@ -165,15 +163,7 @@
       </Button>
 
       <!-- Кнопка удаления -->
-      <Button
-        variant="ghost"
-        size="icon"
-        onclick={() => onDelete(task)}
-        class="h-8 w-8 text-red-500 hover:text-red-600"
-        aria-label="Удалить задачу"
-      >
-        <Trash2 class="h-4 w-4" />
-      </Button>
+      <DeleteConfirmDialog id={task.id} taskTitle={task.title} />
     </div>
   </div>
 </Card.Root>

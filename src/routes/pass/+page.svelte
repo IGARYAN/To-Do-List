@@ -4,6 +4,8 @@
     import { Input } from "$lib/components/ui/input/index.js";
     import { toastStore } from "$lib/stores/toast-store";
     import { currentPass } from "$lib/stores/app-state";
+    import { loadTask } from "$lib/stores/task-store";
+    import { goto } from '$app/navigation';
 
     let password = "";
 
@@ -40,16 +42,32 @@
         return true;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         password = password.trim().replace(/\s+/g, "");
         if (validatePassword(password)) {
             currentPass.set(password);
+            console.log("🔐 Попытка расшифровать задачи с новым паролем...");
+
+            const success = await loadTask();
+
+            if (success) {
+                console.log("✅ Пароль принят, задачи загружены.");
+                goto('/'); // Переход на главную
+            } else {
+                console.warn("❌ Пароль неверный. Ждём новый ввод.");
+                toastStore.add({
+                    title: "Ошибка",
+                    description: "Неверный пароль",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
         if (e.key === "Enter") {
-            handleSubmit();
+            e.preventDefault(); // Если нужно, чтобы форма не сабмитилась по умолчанию
+            await handleSubmit();
         }
     };
 </script>

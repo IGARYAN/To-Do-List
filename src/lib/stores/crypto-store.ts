@@ -1,6 +1,4 @@
-// ✅ Постоянный (жёстко зашитый) пароль для шифрования
-// Можно сгенерировать с помощью любого генератора паролей
-const STATIC_PASSWORD = "8AkzBre@PN%OodiaG|j6H6}6X}yiyUoK";
+// Используем только пользовательский пароль для генерации ключа
 
 // ✅ Постоянный IV (инициализационный вектор), длиной 12 байт (96 бит — стандарт для AES-GCM)
 // IV должен быть неизменным для этого типа реализации, так как мы используем PBKDF2 + соль для уникальности
@@ -9,14 +7,14 @@ const STATIC_IV = Uint8Array.from([21, 42, 63, 84, 105, 126, 147, 168, 189, 210,
 // ================== ШИФРОВАНИЕ ==================
 
 /**
- * Шифрует данные, используя постоянный пароль и пользовательский PIN в качестве соли.
- * @param data - Любые данные, которые нужно зашифровать
- * @param userPin - PIN-код, вводимый пользователем (используется как соль)
- * @returns Зашифрованный текст в base64
+ * Шифрует данные, используя пользовательский пароль.
+ * param data - Любые данные, которые нужно зашифровать
+ * param userPin - Пароль, вводимый пользователем (используется для генерации ключа)
+ * returns Зашифрованный текст в base64
  */
 export async function encryptData(data: any, userPin: string): Promise<{ cipher: string }> {
     // Генерируем криптографический ключ с учётом PIN как соли
-    const key = await getKey(STATIC_PASSWORD, userPin);
+    const key = await getKey(userPin);
 
     // Преобразуем данные в байтовый массив
     const encodedData = new TextEncoder().encode(JSON.stringify(data));
@@ -35,15 +33,15 @@ export async function encryptData(data: any, userPin: string): Promise<{ cipher:
 // ================== ДЕШИФРОВАНИЕ ==================
 
 /**
- * Дешифрует данные, используя постоянный пароль и пользовательский PIN в качестве соли.
- * @param cipher - Зашифрованные данные в base64
- * @param userPin - PIN-код, вводимый пользователем (используется как соль)
- * @returns Объект { success: true/false, data: расшифрованные данные или null }
+ * Дешифрует данные, используя пользовательский пароль.
+ * param cipher - Зашифрованные данные в base64
+ * param userPin - Пароль, вводимый пользователем (используется для генерации ключа)
+ * returns Объект { success: true/false, data: расшифрованные данные или null }
  */
 export async function decryptData(cipher: string, userPin: string): Promise<{ success: boolean; data: any | null }> {
     try {
         // Генерируем ключ на основе введённого PIN
-        const key = await getKey(STATIC_PASSWORD, userPin);
+        const key = await getKey(userPin);
 
         // Пытаемся расшифровать данные
         const decryptedBuffer = await window.crypto.subtle.decrypt(
@@ -67,12 +65,11 @@ export async function decryptData(cipher: string, userPin: string): Promise<{ su
 // ================== ГЕНЕРАЦИЯ КЛЮЧА ==================
 
 /**
- * Генерирует ключ на основе постоянного пароля и пользовательского PIN-кода (соль)
- * @param password - Постоянный пароль
- * @param pin - Пользовательский PIN (используется как соль)
- * @returns Готовый криптографический ключ
+ * Генерирует ключ на основе пользовательского пароля
+ * param password - Пароль, введённый пользователем
+ * returns Готовый криптографический ключ
  */
-async function getKey(password: string, pin: string): Promise<CryptoKey> {
+async function getKey(password: string): Promise<CryptoKey> {
     const encoder = new TextEncoder();
 
     // Импортируем "сырой" ключ из постоянного пароля
@@ -88,7 +85,7 @@ async function getKey(password: string, pin: string): Promise<CryptoKey> {
     return window.crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt: encoder.encode(pin), // Соль: пользовательский PIN
+            salt: encoder.encode("static-salt-value"), // Используем статическую соль
             iterations: 50000, // Количество итераций для замедления перебора
             hash: "SHA-256",
         },
@@ -103,8 +100,8 @@ async function getKey(password: string, pin: string): Promise<CryptoKey> {
 
 /**
  * Преобразует ArrayBuffer в строку base64
- * @param buffer - Массив байт
- * @returns Строка base64
+ * param buffer - Массив байт
+ * returns Строка base64
  */
 function bufferToBase64(buffer: ArrayBuffer): string {
     return btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -112,8 +109,8 @@ function bufferToBase64(buffer: ArrayBuffer): string {
 
 /**
  * Преобразует строку base64 в ArrayBuffer
- * @param base64 - Строка base64
- * @returns ArrayBuffer
+ * param base64 - Строка base64
+ * returns ArrayBuffer
  */
 function base64ToBuffer(base64: string): ArrayBuffer {
     const binary = atob(base64);
