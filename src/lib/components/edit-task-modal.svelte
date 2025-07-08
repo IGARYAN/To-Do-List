@@ -66,19 +66,23 @@
         if (!validate()) return;
 
         try {
-            const newTask: TypesTask = {
+            const updatedTask: TypesTask = {
                 id: editTask.id, // сохраняем тот же id
                 title: title.trim(),
                 description: description.trim() || undefined,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: false,
+                completed: editTask.completed, // сохранить состояние выполнения
             };
 
-            tasks.update((currentTasks) => [...currentTasks, newTask]);
+            tasks.update((currentTasks) =>
+                currentTasks.map((task) =>
+                    task.id === editTask.id ? updatedTask : task,
+                ),
+            );
 
             toastStore.add({
                 title: "Измеение задачи",
-                description: `Задача "${newTask.title}" успешно изменена!`,
+                description: `Задача "${updatedTask.title}" успешно изменена!`,
                 variant: "default",
             });
 
@@ -159,7 +163,7 @@
     </Dialog.Trigger>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
-            <Dialog.Title>Новая задача</Dialog.Title>
+            <Dialog.Title>Редактировать задачу</Dialog.Title>
         </Dialog.Header>
 
         <div class="space-y-4">
@@ -224,24 +228,28 @@
             <Separator />
 
             <div class="flex gap-4">
+                <!-- Кнопка - Отмена -->
                 <Dialog.Close
                     class={`flex-1 transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
                 >
                     Отмена
                 </Dialog.Close>
+
+                <!-- Кнопка - Сохранить -->
                 <Button
                     class="flex-1 transition-all duration-300"
                     onclick={saveTask}
                 >
                     Сохранить
                 </Button>
+
+                <!-- Кнопка - Создать на основе -->
                 <Button
                     variant="outline"
                     class="flex-1 transition-all duration-300"
                     onclick={createCopy}
                 >
-                    <!-- Создать на основе -->
-                    Создать
+                    Создать на основе
                 </Button>
             </div>
         </div>

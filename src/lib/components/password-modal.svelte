@@ -180,7 +180,7 @@
                     <SquareAsterisk class="size-6" />
                     <SquareAsterisk class="size-6" />
                 </div>
-                <h1 class="text-xl font-bold">Введите пароль для отключения</h1>
+                <h1 class="text-xl font-bold">Введите пароль</h1>
             </div>
 
             <div class="flex items-center justify-center rounded-sm">
