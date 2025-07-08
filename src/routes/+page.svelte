@@ -46,6 +46,8 @@
 
   let isSingleColumn = $state(false);
 
+  let midnightTimerId: NodeJS.Timeout | null = null;
+
   /*
     Подписка на изменения в хранилищах при монтировании компонента
     - Добавляем класс 'loaded' для плавного появления интерфейса
@@ -63,36 +65,43 @@
     handleResize();
     window.addEventListener("resize", handleResize);
 
-    // Ставим таймер до полуночи
-    let midnightTimerId = setTimeout(() => {
-      $currentTime = new Date(); // принудительно обновляем дату, что триггернет пересчёт today
-
-      // Сразу ставим таймер на следующую полночь
-      midnightTimerId = startMidnightTimer();
-    }, getMillisecondsToMidnight());
-
-    function startMidnightTimer() {
-      return setTimeout(() => {
-        $currentTime = new Date();
-        midnightTimerId = startMidnightTimer(); // рекурсивно продолжаем на каждый следующий день
-      }, getMillisecondsToMidnight());
-    }
+    // Инициализация таймера, Ставим таймер до полуночи
+    setupMidnightTimer();
 
     // Отписка при размонтировании
     return () => {
       unsubscribeSettings();
-      clearTimeout(midnightTimerId);
+      if (midnightTimerId) { // Очистка
+        clearTimeout(midnightTimerId);
+      }
       window.removeEventListener("resize", handleResize);
     };
   });
 
   // Функция расчёта миллисекунд до следующей полуночи
-  function getMillisecondsToMidnight(bufferMs = 1000) {
-    // 1 секунда запаса
+  function getMillisecondsToMidnight(bufferMs = 1000): number { // 1 секунда запаса
     const now = new Date();
-    const tomorrow = new Date();
-    tomorrow.setHours(24, 0, 0, 0);
-    return tomorrow.getTime() - now.getTime() + bufferMs;
+    const midnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1, // Следующий день
+      0, 0, 0, 0, // Ровно 00:00:00.000
+    );
+    return midnight.getTime() - now.getTime() + bufferMs;
+  }
+
+  function setupMidnightTimer() {
+    if (midnightTimerId) { // Очищаем предыдущий таймер, если есть
+      clearTimeout(midnightTimerId);
+    }
+
+    const updateTimeAndReschedule = () => {
+      $currentTime = new Date(); // Обновляем время
+      setupMidnightTimer();      // Регистрируем следующий таймер
+    };
+
+    const timeUntilMidnight = getMillisecondsToMidnight();
+    midnightTimerId = setTimeout(updateTimeAndReschedule, timeUntilMidnight);
   }
 
   /*

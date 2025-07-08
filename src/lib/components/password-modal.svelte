@@ -141,7 +141,6 @@
                     placeholder="* * * * * *"
                     class="w-40 h-10 text-center text-xl"
                     bind:value={newPass}
-                    autofocus
                 />
             </div>
 
