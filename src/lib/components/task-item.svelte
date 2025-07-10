@@ -9,7 +9,7 @@
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
   import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { tasks } from "$lib/stores/app-state";
+  import { tasks, currentTime } from "$lib/stores/app-state";
 
   // export let task: string;
   let { task } = $props();
@@ -65,14 +65,14 @@
 
   // Сегодняшняя дата
   const today = $derived.by(() => {
-    const date = new Date();
+    const date = new Date($currentTime);
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
   // Завтрашняя дата
   const tomorrow = $derived.by(() => {
-    const date = new Date();
+    const date = new Date($currentTime);
     date.setDate(date.getDate() + 1);
     date.setHours(0, 0, 0, 0);
     return date;
