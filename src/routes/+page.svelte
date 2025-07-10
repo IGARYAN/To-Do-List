@@ -1,6 +1,6 @@
 <script lang="ts">
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
-  import CreateTaskModal from "$lib/components/create-task-modal.svelte"; // Модальное окно задачи
+  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
@@ -9,15 +9,23 @@
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
   import { onMount } from "svelte"; // Хук жизненного цикла
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { currentTime, tasks, settings } from "$lib/stores/app-state";
+  import {
+    isEditTaskModalOpen,
+    currentTime,
+    editedTask,
+    settings,
+    tasks,
+  } from "$lib/stores/app-state";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
   import {
     Calendar,
     Clock,
+    Plus,
     ArrowRight,
     ArrowDown,
     CircleCheckBig,
   } from "lucide-svelte"; // Иконки
+  import Button from "$lib/components/ui/button/button.svelte";
 
   // import { TrayIcon } from "@tauri-apps/api/tray";
   // import { Menu } from "@tauri-apps/api/menu";
@@ -71,7 +79,8 @@
     // Отписка при размонтировании
     return () => {
       unsubscribeSettings();
-      if (midnightTimerId) { // Очистка
+      if (midnightTimerId) {
+        // Очистка
         clearTimeout(midnightTimerId);
       }
       window.removeEventListener("resize", handleResize);
@@ -79,25 +88,30 @@
   });
 
   // Функция расчёта миллисекунд до следующей полуночи
-  function getMillisecondsToMidnight(bufferMs = 1000): number { // 1 секунда запаса
+  function getMillisecondsToMidnight(bufferMs = 1000): number {
+    // 1 секунда запаса
     const now = new Date();
     const midnight = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate() + 1, // Следующий день
-      0, 0, 0, 0, // Ровно 00:00:00.000
+      0,
+      0,
+      0,
+      0, // Ровно 00:00:00.000
     );
     return midnight.getTime() - now.getTime() + bufferMs;
   }
 
   function setupMidnightTimer() {
-    if (midnightTimerId) { // Очищаем предыдущий таймер, если есть
+    if (midnightTimerId) {
+      // Очищаем предыдущий таймер, если есть
       clearTimeout(midnightTimerId);
     }
 
     const updateTimeAndReschedule = () => {
       $currentTime = new Date(); // Обновляем время
-      setupMidnightTimer();      // Регистрируем следующий таймер
+      setupMidnightTimer(); // Регистрируем следующий таймер
     };
 
     const timeUntilMidnight = getMillisecondsToMidnight();
@@ -222,7 +236,17 @@
 
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
-        <CreateTaskModal />
+        <Button
+          onclick={() => {
+            isEditTaskModalOpen.set(true);
+            editedTask.set(null);
+          }}
+          class="transition-all duration-300"
+          variant="default"
+          size="icon"
+        >
+          <Plus class="h-4 w-4" />
+        </Button>
         <ThemeToggle />
         <AlwaysOnTop />
         <SettingsModal />
@@ -257,7 +281,7 @@
           <Card.Content class="px-4">
             <div class="space-y-2">
               {#each futureTasks as task (task.id)}
-                <TaskItem {task} />
+                <TaskItem {task} {currentTime} />
               {/each}
             </div>
           </Card.Content>
@@ -290,7 +314,7 @@
           <!-- Просроченные и сегодняшние задачи -->
           <div class="space-y-2">
             {#each [...overdueTasks, ...todayTasks] as task (task.id)}
-              <TaskItem {task} />
+              <TaskItem {task} {currentTime} />
             {/each}
           </div>
         </Card.Content>
@@ -314,7 +338,7 @@
           <Card.Content class="px-4">
             <div class="space-y-2">
               {#each completedTasks as task (task.id)}
-                <TaskItem {task} />
+                <TaskItem {task} {currentTime} />
               {/each}
             </div>
           </Card.Content>
@@ -323,3 +347,5 @@
     </div>
   </div>
 </div>
+
+<EditTaskModal />

@@ -1,18 +1,20 @@
 <script lang="ts">
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
-  import { Calendar, CheckCircle2, Circle } from "lucide-svelte"; // Иконки
+  import { Calendar, CheckCircle2, Edit, Circle } from "lucide-svelte"; // Иконки
   import { Button } from "$lib/components/ui/button/index.js"; // Кнопки
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
-  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { tasks } from "$lib/stores/app-state";
+  import {
+    isEditTaskModalOpen,
+    editedTask,
+    tasks,
+  } from "$lib/stores/app-state";
 
-  // export let task: string;
-  let { task } = $props();
+  let { task, currentTime } = $props();
 
   // Реактивное состояние для отображения кнопок действий при наведении
   let isHovered = $state(false);
@@ -65,14 +67,14 @@
 
   // Сегодняшняя дата
   const today = $derived.by(() => {
-    const date = new Date();
+    const date = new Date($currentTime);
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
   // Завтрашняя дата
   const tomorrow = $derived.by(() => {
-    const date = new Date();
+    const date = new Date($currentTime);
     date.setDate(date.getDate() + 1);
     date.setHours(0, 0, 0, 0);
     return date;
@@ -173,7 +175,18 @@
       }`}
     >
       <!-- Кнопка редактирования -->
-      <EditTaskModal editTask={task} />
+      <Button
+        onclick={() => {
+          isEditTaskModalOpen.set(true);
+          editedTask.set(task);
+        }}
+        class="h-8 w-8"
+        variant="ghost"
+        size="icon"
+        aria-label="Редактировать задачу"
+      >
+        <Edit class="h-4 w-4" />
+      </Button>
 
       <!-- Кнопка удаления -->
       <DeleteConfirmDialog delTask={task} />

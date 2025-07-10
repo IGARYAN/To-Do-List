@@ -4,12 +4,16 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar, Edit } from "lucide-svelte";
+    import { Calendar } from "lucide-svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
-    import { tasks } from "$lib/stores/app-state";
+    import {
+        isEditTaskModalOpen,
+        editedTask,
+        tasks,
+    } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
@@ -18,10 +22,7 @@
     } from "@internationalized/date";
     import { v4 as uuidv4 } from "uuid";
 
-    let isEditTaskModalOpen = $state(false);
     let isPopoverOpen = $state(false);
-
-    let { editTask } = $props();
 
     // Реактивные переменные
     let value = $state<CalendarDate | undefined>(undefined);
@@ -67,18 +68,17 @@
 
         try {
             const updatedTask: TypesTask = {
-                id: editTask.id, // сохраняем тот же id
+                id: $editedTask?.id ?? uuidv4(), // если редактируем — оставить id, иначе новый
                 title: title.trim(),
                 description: description.trim() || undefined,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: editTask.completed, // сохранить состояние выполнения
+                completed: $editedTask?.completed ?? false, // если редактируем — сохранить состояние выполнения иначе false
             };
 
-            tasks.update((currentTasks) =>
-                currentTasks.map((task) =>
-                    task.id === editTask.id ? updatedTask : task,
-                ),
-            );
+            tasks.update((current) => {
+                const updated = current.filter((t) => t.id !== updatedTask.id);
+                return [...updated, updatedTask];
+            });
 
             toastStore.add({
                 title: "Измеение задачи",
@@ -86,7 +86,8 @@
                 variant: "default",
             });
 
-            isEditTaskModalOpen = false;
+            isEditTaskModalOpen.set(false);
+            editedTask.set(null);
             resetForm();
         } catch (e) {
             toastStore.add({
@@ -118,7 +119,8 @@
                 variant: "default",
             });
 
-            isEditTaskModalOpen = false;
+            isEditTaskModalOpen.set(false);
+            editedTask.set(null);
             resetForm();
         } catch (e) {
             toastStore.add({
@@ -131,10 +133,10 @@
     }
 
     $effect(() => {
-        if (isEditTaskModalOpen && editTask) {
-            title = editTask.title;
-            description = editTask.description || "";
-            const taskDate = new Date(editTask.date);
+        if (isEditTaskModalOpen && $editedTask) {
+            title = $editedTask.title;
+            description = $editedTask.description || "";
+            const taskDate = new Date($editedTask.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
                 taskDate.getMonth() + 1,
@@ -151,19 +153,25 @@
     });
 </script>
 
-<Dialog.Root bind:open={isEditTaskModalOpen}>
-    <Dialog.Trigger
-        onclick={() => {
-            isEditTaskModalOpen = true;
-        }}
-        class={`h-8 w-8 ${buttonVariants({ variant: "ghost", size: "icon" })}`}
-        aria-label="Удалить задачу"
-    >
-        <Edit class="h-4 w-4" />
-    </Dialog.Trigger>
+<Dialog.Root
+    bind:open={$isEditTaskModalOpen}
+    onOpenChange={(open) => {
+        isEditTaskModalOpen.set(open);
+        if (!open) {
+            setTimeout(() => {
+                editedTask.set(null);
+                resetForm();
+            }, 300); // 100–200ms подбирается по длительности анимации закрытия
+        }
+    }}
+>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
-            <Dialog.Title>Редактировать задачу</Dialog.Title>
+            <Dialog.Title
+                >{$editedTask
+                    ? "Редактировать задачу"
+                    : "Новая задача"}</Dialog.Title
+            >
         </Dialog.Header>
 
         <div class="space-y-4">
@@ -235,22 +243,31 @@
                     Отмена
                 </Dialog.Close>
 
-                <!-- Кнопка - Сохранить -->
-                <Button
-                    class="flex-1 transition-all duration-300"
-                    onclick={saveTask}
-                >
-                    Сохранить
-                </Button>
-
-                <!-- Кнопка - Создать на основе -->
-                <Button
-                    variant="outline"
-                    class="flex-1 transition-all duration-300"
-                    onclick={createCopy}
-                >
-                    Создать на основе
-                </Button>
+                {#if $editedTask}
+                    <!-- Показываем кнопку "Сохранить" только при редактировании -->
+                    <Button
+                        class="flex-1 transition-all duration-300"
+                        onclick={saveTask}
+                    >
+                        Сохранить
+                    </Button>
+                    <!-- Кнопка "Создать на основе" при редактировании -->
+                    <Button
+                        variant="outline"
+                        class="flex-1 transition-all duration-300"
+                        onclick={createCopy}
+                    >
+                        Создать на основе
+                    </Button>
+                {:else}
+                    <!-- Только кнопка "Создать", когда создаём новую задачу -->
+                    <Button
+                        class="flex-1 transition-all duration-300"
+                        onclick={createCopy}
+                    >
+                        Создать
+                    </Button>
+                {/if}
             </div>
         </div>
     </Dialog.Content>
