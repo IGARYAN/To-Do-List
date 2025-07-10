@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { buttonVariants } from "$lib/components/ui/button";
-    import { Pin, PinOff } from "lucide-svelte";
+    import { Pin, PinOff } from "@lucide/svelte";
     import { settings } from "$lib/stores/app-state";
     import { toastStore } from "$lib/stores/toast-store";
     import * as Tooltip from "$lib/components/ui/tooltip/index.js";

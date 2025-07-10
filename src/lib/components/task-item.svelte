@@ -1,7 +1,7 @@
 <script lang="ts">
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
-  import { Calendar, CheckCircle2, Circle } from "lucide-svelte"; // Иконки
+  import { Calendar, CheckCircle2, Circle } from "@lucide/svelte"; // Иконки
   import { Button } from "$lib/components/ui/button/index.js"; // Кнопки
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов

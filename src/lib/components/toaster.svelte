@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { CheckCircle2, AlertCircle, X } from 'lucide-svelte'
+  import { CheckCircle2, AlertCircle, X } from '@lucide/svelte'
   import { Button } from "$lib/components/ui/button/index.js";
   import { toastStore } from '$lib/stores/toast-store'
   import type { TypesToast } from '$lib/types/types-toast'

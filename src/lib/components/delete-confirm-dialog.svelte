@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AlertTriangle, Trash2 } from "lucide-svelte";
+  import { AlertTriangle, Trash2 } from "@lucide/svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { tasks } from "$lib/stores/app-state";

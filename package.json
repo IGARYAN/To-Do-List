@@ -17,7 +17,6 @@
     "@tauri-apps/plugin-fs": "^2.3.0",
     "@tauri-apps/plugin-opener": "^2",
     "date-fns": "^4.1.0",
-    "lucide-svelte": "^0.518.0",
     "tailwindcss": "^4.1.10",
     "uuid": "^11.1.0"
   },

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { get } from "svelte/store";
     import { currentPass, tasks } from "$lib/stores/app-state";
-    import { SquareAsterisk } from "lucide-svelte";
+    import { SquareAsterisk } from "@lucide/svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toastStore } from "$lib/stores/toast-store";

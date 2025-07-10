@@ -1,6 +1,6 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card/index.js";
-    import { CircleX, Calendar, Clock, CircleCheckBig } from "lucide-svelte"; // Иконки
+    import { CircleX, Calendar, Clock, CircleCheckBig } from "@lucide/svelte"; // Иконки
 
     let { Future, Overdue, Today, Completed } = $props();
 </script>

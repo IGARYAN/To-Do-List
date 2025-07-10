@@ -4,7 +4,7 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar, Edit } from "lucide-svelte";
+    import { Calendar, Edit } from "@lucide/svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";

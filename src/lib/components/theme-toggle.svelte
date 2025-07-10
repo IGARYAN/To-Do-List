@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Moon, Sun, Monitor } from "lucide-svelte";
+  import { Moon, Sun, Monitor } from "@lucide/svelte";
   import { buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";

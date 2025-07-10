@@ -17,7 +17,7 @@
     ArrowRight,
     ArrowDown,
     CircleCheckBig,
-  } from "lucide-svelte"; // Иконки
+  } from "@lucide/svelte"; // Иконки
 
   // import { TrayIcon } from "@tauri-apps/api/tray";
   // import { Menu } from "@tauri-apps/api/menu";
