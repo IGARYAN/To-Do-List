@@ -11,7 +11,6 @@
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { tasks, currentTime } from "$lib/stores/app-state";
 
-  // export let task: string;
   let { task } = $props();
 
   // Реактивное состояние для отображения кнопок действий при наведении

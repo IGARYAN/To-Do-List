@@ -9,7 +9,7 @@
 <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
     <!-- Карточка будущих задач -->
     <Card.Root
-        class="border-orange-300 dark:border-orange-900 bg-orange-50 dark:bg-orange-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-orange-300 dark:border-orange-900 bg-orange-50 dark:bg-orange-950 transition-all duration-300 hover:shadow-lg dark:hover:shadow-white/10"
     >
         <Card.Content class="px-6 py-0">
             <div class="flex flex-col gap-1">
@@ -24,7 +24,7 @@
 
     <!-- Карточка просроченных задач -->
     <Card.Root
-        class="border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950 transition-all duration-300 hover:shadow-lg dark:hover:shadow-white/10"
     >
         <Card.Content class="px-6 py-0">
             <div class="flex flex-col gap-1">
@@ -39,7 +39,7 @@
 
     <!-- Карточка задач на сегодня -->
     <Card.Root
-        class="border-blue-300 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-blue-300 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 transition-all duration-300 hover:shadow-lg dark:hover:shadow-white/10"
     >
         <Card.Content class="px-6 py-0">
             <div class="flex flex-col gap-1">
@@ -54,7 +54,7 @@
 
     <!-- Карточка выполненных задач -->
     <Card.Root
-        class="border-green-300 dark:border-green-900 bg-green-50 dark:bg-green-950 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10"
+        class="border-green-300 dark:border-green-900 bg-green-50 dark:bg-green-950 transition-all duration-300 hover:shadow-lg dark:hover:shadow-white/10"
     >
         <Card.Content class="px-6 py-0">
             <div class="flex flex-col gap-1">

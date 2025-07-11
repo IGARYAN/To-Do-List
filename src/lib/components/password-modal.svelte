@@ -15,8 +15,8 @@
     let inputPass = $state("");
 
     function cancelDialog() {
-        resetForm();
         isPassModalOpen = false;
+        resetForm();
     }
 
     // Очистка формы
@@ -27,7 +27,7 @@
     }
 
     // Верификация нового парооля
-    const validatePassword = (pass: string) => {
+    const validatePass = (pass: string) => {
         pass = pass.trim().replace(/\s+/g, "");
 
         if (!pass) {
@@ -61,8 +61,8 @@
 
     // Сохраняем новый пароль для включения входа с паролем
     function savePass() {
-        if (!validatePassword(newPass)) return;
-        if (!validatePassword(confirmPass)) return;
+        if (!validatePass(newPass)) return;
+        if (!validatePass(confirmPass)) return;
         if (newPass !== confirmPass) {
             toastStore.add({
                 title: "Ошибка",
@@ -78,13 +78,13 @@
             description: "Новый пароль успешно создан.",
             variant: "default",
         });
-        resetForm();
         isPassModalOpen = false;
+        resetForm();
     }
 
     // Проверка пароля для отключения входа с паролем
     function verifyPass() {
-        if (!validatePassword(inputPass)) return;
+        if (!validatePass(inputPass)) return;
         if (inputPass === $currentPass) {
             currentPass.set(null);
             saveTask(get(tasks)); // Пересохраняем файл в незашифрованном виде
@@ -93,8 +93,8 @@
                 description: "Вход с паролем успешно отключен.",
                 variant: "default",
             });
-            resetForm();
             isPassModalOpen = false;
+            resetForm();
         } else {
             toastStore.add({
                 title: "Ошибка",

@@ -11,6 +11,7 @@
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { currentTime, tasks, settings } from "$lib/stores/app-state";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
+  import { Button } from "$lib/components/ui/button/index.js";
   import {
     Calendar,
     Clock,
@@ -45,6 +46,7 @@
   // setupTray();
 
   let isSingleColumn = $state(false);
+  let showAllFutureTasks = $state(false);
 
   let midnightTimerId: NodeJS.Timeout | null = null;
 
@@ -71,7 +73,8 @@
     // Отписка при размонтировании
     return () => {
       unsubscribeSettings();
-      if (midnightTimerId) { // Очистка
+      if (midnightTimerId) {
+        // Очистка
         clearTimeout(midnightTimerId);
       }
       window.removeEventListener("resize", handleResize);
@@ -79,25 +82,30 @@
   });
 
   // Функция расчёта миллисекунд до следующей полуночи
-  function getMillisecondsToMidnight(bufferMs = 1000): number { // 1 секунда запаса
+  function getMillisecondsToMidnight(bufferMs = 1000): number {
+    // 1 секунда запаса
     const now = new Date();
     const midnight = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate() + 1, // Следующий день
-      0, 0, 0, 0, // Ровно 00:00:00.000
+      0,
+      0,
+      0,
+      0, // Ровно 00:00:00.000
     );
     return midnight.getTime() - now.getTime() + bufferMs;
   }
 
   function setupMidnightTimer() {
-    if (midnightTimerId) { // Очищаем предыдущий таймер, если есть
+    if (midnightTimerId) {
+      // Очищаем предыдущий таймер, если есть
       clearTimeout(midnightTimerId);
     }
 
     const updateTimeAndReschedule = () => {
       $currentTime = new Date(); // Обновляем время
-      setupMidnightTimer();      // Регистрируем следующий таймер
+      setupMidnightTimer(); // Регистрируем следующий таймер
     };
 
     const timeUntilMidnight = getMillisecondsToMidnight();
@@ -243,7 +251,7 @@
         <!-- Будущие задачи -->
         <Card.Root>
           <Card.Header>
-            <Card.Title class="flex items-center gap-2">
+            <!-- <Card.Title class="flex items-center gap-2">
               <Clock class="h-5 w-5 text-orange-500" />
               Ближайшие задачи
               <Badge variant="secondary">{futureTasks.length}</Badge>
@@ -252,6 +260,27 @@
               {:else}
                 <ArrowRight class="h-5 w-5" />
               {/if}
+              кнопка
+            </Card.Title> -->
+
+            <Card.Title class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <Clock class="h-5 w-5 text-orange-500" />
+                Ближайшие задачи
+                <Badge variant="secondary">{futureTasks.length}</Badge>
+                {#if isSingleColumn}
+                  <ArrowDown class="h-5 w-5" />
+                {:else}
+                  <ArrowRight class="h-5 w-5" />
+                {/if}
+              </div>
+
+              <Button
+                size="sm"
+                variant={showAllFutureTasks ? "default" : "ghost"}
+                onclick={() => (showAllFutureTasks = !showAllFutureTasks)}
+                >Все</Button
+              >
             </Card.Title>
           </Card.Header>
           <Card.Content class="px-4">
@@ -288,11 +317,39 @@
           {/if}
 
           <!-- Просроченные и сегодняшние задачи -->
-          <div class="space-y-2">
+          <!-- <div class="space-y-2">
             {#each [...overdueTasks, ...todayTasks] as task (task.id)}
               <TaskItem {task} />
             {/each}
-          </div>
+          </div> -->
+
+          <!-- Просроченные задачи -->
+          {#if overdueTasks.length > 0}
+            <div class="mb-2">
+              <p class="text-sm font-semibold text-destructive pl-1 mb-1">
+                Просроченные
+              </p>
+              <div class="space-y-2">
+                {#each overdueTasks as task (task.id)}
+                  <TaskItem {task} />
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <!-- Сегодняшние задачи -->
+          {#if todayTasks.length > 0}
+            <div>
+              <p class="text-sm font-semibold text-blue-600 pl-1 mb-1">
+                Сегодня
+              </p>
+              <div class="space-y-2">
+                {#each todayTasks as task (task.id)}
+                  <TaskItem {task} />
+                {/each}
+              </div>
+            </div>
+          {/if}
         </Card.Content>
       </Card.Root>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { SquareAsterisk } from "lucide-svelte";
+    import { SquareAsterisk } from "@lucide/svelte";
     import { Button } from "$lib/components/ui/button/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { toastStore } from "$lib/stores/toast-store";
