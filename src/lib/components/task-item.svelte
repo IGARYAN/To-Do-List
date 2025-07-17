@@ -1,15 +1,27 @@
 <script lang="ts">
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
-  import { Calendar, CheckCircle2, Circle } from "@lucide/svelte"; // Иконки
-  import { Button } from "$lib/components/ui/button/index.js"; // Кнопки
+  import { Button, buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
-  import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
-  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { tasks, currentTime } from "$lib/stores/app-state";
+  import {
+    Circle,
+    Pencil,
+    Trash2,
+    Calendar,
+    CircleCheckBig,
+    EllipsisVertical,
+  } from "@lucide/svelte"; // Иконки
+  import {
+    tasks,
+    currentTime,
+    taskEditOrDelete,
+    isEditTaskModalOpen,
+    isDeleteConfirmDialogOpen,
+  } from "$lib/stores/app-state";
 
   let { task } = $props();
 
@@ -86,6 +98,18 @@
   );
   const isToday = $derived(taskDate.getTime() === today.getTime());
   const isTomorrow = $derived(taskDate.getTime() === tomorrow.getTime());
+
+  // Функция открывает диалог редактирования задачи
+  function EditTaskModalOpen() {
+    taskEditOrDelete.set(task);
+    isEditTaskModalOpen.set(true);
+  }
+
+  // Функция открывает диалог подтверждения удаления задачи
+  function DeleteConfirmDialogOpen() {
+    taskEditOrDelete.set(task);
+    isDeleteConfirmDialogOpen.set(true);
+  }
 </script>
 
 <Card.Root
@@ -106,7 +130,7 @@
         : "Отметить как выполненную"}
     >
       {#if task.completed}
-        <CheckCircle2 class="h-5 w-5 text-green-500" />
+        <CircleCheckBig class="h-5 w-5 text-green-500" />
       {:else}
         <Circle class="h-5 w-5 text-muted-foreground hover:text-primary" />
       {/if}
@@ -171,11 +195,26 @@
         isHovered ? "opacity-100" : "opacity-0"
       }`}
     >
-      <!-- Кнопка редактирования -->
-      <EditTaskModal editTask={task} />
-
-      <!-- Кнопка удаления -->
-      <DeleteConfirmDialog delTask={task} />
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger
+          class={`transition-all duration-300 relative ${buttonVariants({ variant: "ghost", size: "icon" })}`}
+          aria-label="Меню"
+        >
+          <EllipsisVertical class="h-4 w-4" />
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <!-- Пункт меню редактирования задачи -->
+          <DropdownMenu.Item onclick={EditTaskModalOpen}>
+            <Pencil class="h-4 w-4" />
+            <span>Изменить</span>
+          </DropdownMenu.Item>
+          <!-- Пункт меню удаления задачи -->
+          <DropdownMenu.Item onclick={DeleteConfirmDialogOpen}>
+            <Trash2 class="h-4 w-4 text-red-500" />
+            <span>Удалить</span>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </div>
   </div>
 </Card.Root>

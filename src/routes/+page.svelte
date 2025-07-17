@@ -5,13 +5,14 @@
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
+  import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
+  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
   import { onMount } from "svelte"; // Хук жизненного цикла
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { currentTime, tasks, settings } from "$lib/stores/app-state";
+  import { currentTime, tasks, settings, taskEditOrDelete } from "$lib/stores/app-state";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
-  import { Button } from "$lib/components/ui/button/index.js";
   import {
     Calendar,
     Clock,
@@ -20,33 +21,7 @@
     CircleCheckBig,
   } from "@lucide/svelte"; // Иконки
 
-  // import { TrayIcon } from "@tauri-apps/api/tray";
-  // import { Menu } from "@tauri-apps/api/menu";
-
-  // async function setupTray() {
-  //   const menu = await Menu.new({
-  //     items: [
-  //       {
-  //         id: "quit",
-  //         text: "Выход",
-  //       },
-  //     ],
-  //   });
-
-  //   const options = {
-  //     menu,
-  //     icon: "icons/icon.ico",
-  //     tooltip: "Мое приложение",
-  //     menuOnLeftClick: true,
-  //   };
-
-  //   const tray = await TrayIcon.new(options);
-  // }
-
-  // setupTray();
-
   let isSingleColumn = $state(false);
-  let showAllFutureTasks = $state(false);
 
   let midnightTimerId: NodeJS.Timeout | null = null;
 
@@ -162,8 +137,8 @@
       .filter((task) => task.completed)
       .sort(
         (a, b) =>
-          new Date(b.completedAt!).getTime() -
-          new Date(a.completedAt!).getTime(),
+          new Date(b.date!).getTime() -
+          new Date(a.date!).getTime(),
       ),
   );
 
@@ -251,7 +226,7 @@
         <!-- Будущие задачи -->
         <Card.Root>
           <Card.Header>
-            <!-- <Card.Title class="flex items-center gap-2">
+            <Card.Title class="flex items-center gap-2">
               <Clock class="h-5 w-5 text-orange-500" />
               Ближайшие задачи
               <Badge variant="secondary">{futureTasks.length}</Badge>
@@ -260,28 +235,8 @@
               {:else}
                 <ArrowRight class="h-5 w-5" />
               {/if}
-              кнопка
-            </Card.Title> -->
-
-            <Card.Title class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <Clock class="h-5 w-5 text-orange-500" />
-                Ближайшие задачи
-                <Badge variant="secondary">{futureTasks.length}</Badge>
-                {#if isSingleColumn}
-                  <ArrowDown class="h-5 w-5" />
-                {:else}
-                  <ArrowRight class="h-5 w-5" />
-                {/if}
-              </div>
-
-              <Button
-                size="sm"
-                variant={showAllFutureTasks ? "default" : "ghost"}
-                onclick={() => (showAllFutureTasks = !showAllFutureTasks)}
-                >Все</Button
-              >
             </Card.Title>
+
           </Card.Header>
           <Card.Content class="px-4">
             <div class="space-y-2">
@@ -317,39 +272,11 @@
           {/if}
 
           <!-- Просроченные и сегодняшние задачи -->
-          <!-- <div class="space-y-2">
+          <div class="space-y-2">
             {#each [...overdueTasks, ...todayTasks] as task (task.id)}
               <TaskItem {task} />
             {/each}
-          </div> -->
-
-          <!-- Просроченные задачи -->
-          {#if overdueTasks.length > 0}
-            <div class="mb-2">
-              <p class="text-sm font-semibold text-destructive pl-1 mb-1">
-                Просроченные
-              </p>
-              <div class="space-y-2">
-                {#each overdueTasks as task (task.id)}
-                  <TaskItem {task} />
-                {/each}
-              </div>
-            </div>
-          {/if}
-
-          <!-- Сегодняшние задачи -->
-          {#if todayTasks.length > 0}
-            <div>
-              <p class="text-sm font-semibold text-blue-600 pl-1 mb-1">
-                Сегодня
-              </p>
-              <div class="space-y-2">
-                {#each todayTasks as task (task.id)}
-                  <TaskItem {task} />
-                {/each}
-              </div>
-            </div>
-          {/if}
+          </div>
         </Card.Content>
       </Card.Root>
 
@@ -380,3 +307,6 @@
     </div>
   </div>
 </div>
+
+<EditTaskModal editTask={$taskEditOrDelete} />
+<DeleteConfirmDialog delTask={$taskEditOrDelete} />

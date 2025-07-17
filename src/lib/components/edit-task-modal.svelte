@@ -4,12 +4,12 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar, Edit } from "@lucide/svelte";
+    import { Calendar } from "@lucide/svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
-    import { tasks } from "$lib/stores/app-state";
+    import { tasks, isEditTaskModalOpen } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
@@ -18,7 +18,6 @@
     } from "@internationalized/date";
     import { v4 as uuidv4 } from "uuid";
 
-    let isEditTaskModalOpen = $state(false);
     let isPopoverOpen = $state(false);
 
     let { editTask } = $props();
@@ -86,7 +85,7 @@
                 variant: "default",
             });
 
-            isEditTaskModalOpen = false;
+            isEditTaskModalOpen.set(false);
             resetForm();
         } catch (e) {
             toastStore.add({
@@ -118,7 +117,7 @@
                 variant: "default",
             });
 
-            isEditTaskModalOpen = false;
+            isEditTaskModalOpen.set(false);
             resetForm();
         } catch (e) {
             toastStore.add({
@@ -131,7 +130,7 @@
     }
 
     $effect(() => {
-        if (isEditTaskModalOpen && editTask) {
+        if ($isEditTaskModalOpen && editTask) {
             title = editTask.title;
             description = editTask.description || "";
             const taskDate = new Date(editTask.date);
@@ -151,16 +150,7 @@
     });
 </script>
 
-<Dialog.Root bind:open={isEditTaskModalOpen}>
-    <Dialog.Trigger
-        onclick={() => {
-            isEditTaskModalOpen = true;
-        }}
-        class={`h-8 w-8 ${buttonVariants({ variant: "ghost", size: "icon" })}`}
-        aria-label="Удалить задачу"
-    >
-        <Edit class="h-4 w-4" />
-    </Dialog.Trigger>
+<Dialog.Root bind:open={$isEditTaskModalOpen}>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
             <Dialog.Title>Редактировать задачу</Dialog.Title>
@@ -235,14 +225,6 @@
                     Отмена
                 </Dialog.Close>
 
-                <!-- Кнопка - Сохранить -->
-                <Button
-                    class="flex-1 transition-all duration-300"
-                    onclick={saveTask}
-                >
-                    Сохранить
-                </Button>
-
                 <!-- Кнопка - Создать на основе -->
                 <Button
                     variant="outline"
@@ -250,6 +232,14 @@
                     onclick={createCopy}
                 >
                     Создать на основе
+                </Button>
+
+                <!-- Кнопка - Сохранить -->
+                <Button
+                    class="flex-1 transition-all duration-300"
+                    onclick={saveTask}
+                >
+                    Сохранить
                 </Button>
             </div>
         </div>

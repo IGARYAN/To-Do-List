@@ -1,14 +1,12 @@
 <script lang="ts">
-  import { AlertTriangle, Trash2 } from "@lucide/svelte";
+  import { AlertTriangle } from "@lucide/svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import { tasks } from "$lib/stores/app-state";
+  import { tasks, isDeleteConfirmDialogOpen } from "$lib/stores/app-state";
   import { toastStore } from "$lib/stores/toast-store";
   import { get } from "svelte/store";
 
   let { delTask } = $props();
-
-  let isDeleteConfirmDialogOpen = $state(false);
 
   /*
     Удаление задачи
@@ -17,25 +15,19 @@
   */
   function deleteTask() {
     const currentTasks = get(tasks);
-    tasks.set(currentTasks.filter(task => task.id !== delTask.id));
+    tasks.set(currentTasks.filter((task) => task.id !== delTask.id));
 
     toastStore.add({
-        title: "Удаление задачи",
-        description: `Задача "${delTask.title}" успешно удалена.`,
-        variant: "default",
-      });
+      title: "Удаление задачи",
+      description: `Задача "${delTask.title}" успешно удалена.`,
+      variant: "default",
+    });
 
-    isDeleteConfirmDialogOpen = false;
+    isDeleteConfirmDialogOpen.set(false);
   }
 </script>
 
-<Dialog.Root open={isDeleteConfirmDialogOpen} onOpenChange={() => (isDeleteConfirmDialogOpen = false)}>
-  <Dialog.Trigger onclick={() => { isDeleteConfirmDialogOpen = true; }}
-    class={`h-8 w-8 text-red-500 hover:text-red-600 ${buttonVariants({ variant: "ghost", size: "icon" })}`}
-    aria-label="Удалить задачу"
-  >
-    <Trash2 class="h-4 w-4" />
-  </Dialog.Trigger>
+<Dialog.Root bind:open={$isDeleteConfirmDialogOpen}>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">
