@@ -4,13 +4,16 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
-    import { Calendar, Plus } from "@lucide/svelte";
+    import { Calendar } from "@lucide/svelte";
     import * as Popover from "$lib/components/ui/popover";
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
-    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
-    import { tasks } from "$lib/stores/app-state";
+    import {
+        tasks,
+        taskCreateEdit,
+        isCreateTaskModalOpen,
+    } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
@@ -19,8 +22,9 @@
     } from "@internationalized/date";
     import { v4 as uuidv4 } from "uuid";
 
-    let isCreateTaskModalOpen = $state(false);
     let isPopoverOpen = $state(false);
+
+    let { createTask = null } = $props();
 
     // Реактивные переменные
     let value = $state<CalendarDate | undefined>(undefined);
@@ -33,10 +37,17 @@
         year: "numeric",
     });
 
+    function cancelDialog() {
+        resetForm();
+        taskCreateEdit.set(null);
+        isCreateTaskModalOpen.set(false);
+    }
+
     function resetForm() {
         title = "";
         description = "";
         value = undefined;
+        createTask = null;
     }
 
     function validate(): boolean {
@@ -57,7 +68,6 @@
             });
             return false;
         }
-
         return true;
     }
 
@@ -80,9 +90,7 @@
                 description: `Задача "${newTask.title}" успешно создана и добавлена в список задач!`,
                 variant: "default",
             });
-
-            isCreateTaskModalOpen = false;
-            resetForm();
+            cancelDialog();
         } catch (e) {
             toastStore.add({
                 title: "Ошибка",
@@ -93,6 +101,19 @@
         }
     }
 
+    $effect(() => {
+        if ($isCreateTaskModalOpen && createTask) {
+            title = createTask.title;
+            description = createTask.description || "";
+            const taskDate = new Date(createTask.date);
+            value = new CalendarDate(
+                taskDate.getFullYear(),
+                taskDate.getMonth() + 1,
+                taskDate.getDate(),
+            );
+        }
+    });
+
     // Автоматическое закрытие поповера при выборе даты
     $effect(() => {
         if (value) {
@@ -101,25 +122,12 @@
     });
 </script>
 
-<Tooltip.Provider delayDuration={1000}>
-    <Tooltip.Root>
-        <Tooltip.Trigger
-            onclick={() => {
-                isCreateTaskModalOpen = true;
-                resetForm();
-            }}
-            class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
-        >
-            <Plus class="h-4 w-4" />
-        </Tooltip.Trigger>
-
-        <Tooltip.Content>
-            <p>Добавить новую задачу</p>
-        </Tooltip.Content>
-    </Tooltip.Root>
-</Tooltip.Provider>
-
-<Dialog.Root bind:open={isCreateTaskModalOpen}>
+<Dialog.Root
+    bind:open={$isCreateTaskModalOpen}
+    onOpenChange={(open) => {
+        if (!open) cancelDialog();
+    }}
+>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
             <Dialog.Title>Новая задача</Dialog.Title>

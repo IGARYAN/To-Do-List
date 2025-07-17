@@ -15,8 +15,8 @@
     let inputPass = $state("");
 
     function cancelDialog() {
-        isPassModalOpen = false;
         resetForm();
+        isPassModalOpen = false;
     }
 
     // Очистка формы
@@ -78,8 +78,7 @@
             description: "Новый пароль успешно создан.",
             variant: "default",
         });
-        isPassModalOpen = false;
-        resetForm();
+        cancelDialog();
     }
 
     // Проверка пароля для отключения входа с паролем
@@ -93,8 +92,7 @@
                 description: "Вход с паролем успешно отключен.",
                 variant: "default",
             });
-            isPassModalOpen = false;
-            resetForm();
+            cancelDialog();
         } else {
             toastStore.add({
                 title: "Ошибка",

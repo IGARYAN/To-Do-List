@@ -8,6 +8,7 @@
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import {
+    Plus,
     Circle,
     Pencil,
     Trash2,
@@ -17,9 +18,11 @@
   } from "@lucide/svelte"; // Иконки
   import {
     tasks,
+    taskDelete,
     currentTime,
-    taskEditOrDelete,
+    taskCreateEdit,
     isEditTaskModalOpen,
+    isCreateTaskModalOpen,
     isDeleteConfirmDialogOpen,
   } from "$lib/stores/app-state";
 
@@ -101,13 +104,19 @@
 
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
-    taskEditOrDelete.set(task);
+    taskCreateEdit.set(task);
     isEditTaskModalOpen.set(true);
+  }
+
+  // Функция открывает диалог создания задачи из существующей задачи
+  function CreateTaskModalOpen() {
+    taskCreateEdit.set(task);
+    isCreateTaskModalOpen.set(true);
   }
 
   // Функция открывает диалог подтверждения удаления задачи
   function DeleteConfirmDialogOpen() {
-    taskEditOrDelete.set(task);
+    taskDelete.set(task);
     isDeleteConfirmDialogOpen.set(true);
   }
 </script>
@@ -208,6 +217,15 @@
             <Pencil class="h-4 w-4" />
             <span>Изменить</span>
           </DropdownMenu.Item>
+
+          <!-- Пункт меню создания задачи из -->
+          <DropdownMenu.Item onclick={CreateTaskModalOpen}>
+            <Plus class="h-4 w-4" />
+            <span>Создать из</span>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Separator />
+
           <!-- Пункт меню удаления задачи -->
           <DropdownMenu.Item onclick={DeleteConfirmDialogOpen}>
             <Trash2 class="h-4 w-4 text-red-500" />

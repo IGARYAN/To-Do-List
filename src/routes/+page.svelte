@@ -9,15 +9,27 @@
   import EditTaskModal from "$lib/components/edit-task-modal.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { onMount } from "svelte"; // Хук жизненного цикла
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { currentTime, tasks, settings, taskEditOrDelete } from "$lib/stores/app-state";
-  import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
   import {
-    Calendar,
+    tasks,
+    settings,
+    taskDelete,
+    currentTime,
+    taskCreateEdit,
+    isEditTaskModalOpen,
+    isCreateTaskModalOpen,
+    isDeleteConfirmDialogOpen,
+  } from "$lib/stores/app-state";
+  import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
+  import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
+  import {
+    Plus,
     Clock,
-    ArrowRight,
+    Calendar,
     ArrowDown,
+    ArrowRight,
     CircleCheckBig,
   } from "@lucide/svelte"; // Иконки
 
@@ -26,10 +38,10 @@
   let midnightTimerId: NodeJS.Timeout | null = null;
 
   /*
-    Подписка на изменения в хранилищах при монтировании компонента
-    - Добавляем класс 'loaded' для плавного появления интерфейса
-    - Подписываемся на изменения задач и настроек
-  */
+      Подписка на изменения в хранилищах при монтировании компонента
+      - Добавляем класс 'loaded' для плавного появления интерфейса
+      - Подписываемся на изменения задач и настроек
+    */
   onMount(() => {
     document.documentElement.classList.add("loaded");
 
@@ -88,10 +100,10 @@
   }
 
   /*
-    Эффект для автоматического удаления выполненных задач
-    Срабатывает при изменении списка задач или настроек
-    Удаляет задачи, выполненные более autoDeleteDays дней назад
-  */
+      Эффект для автоматического удаления выполненных задач
+      Срабатывает при изменении списка задач или настроек
+      Удаляет задачи, выполненные более autoDeleteDays дней назад
+    */
   $effect(() => {
     if ($tasks.length === 0) return;
 
@@ -120,9 +132,9 @@
   });
 
   /*
-    Фильтрация задач по категориям
-    Все категории используют $derived для реактивности
-  */
+      Фильтрация задач по категориям
+      Все категории используют $derived для реактивности
+    */
 
   // Текущая дата (нормализованная)
   const today = $derived.by(() => {
@@ -136,9 +148,7 @@
     $tasks
       .filter((task) => task.completed)
       .sort(
-        (a, b) =>
-          new Date(b.date!).getTime() -
-          new Date(a.date!).getTime(),
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
       ),
   );
 
@@ -199,13 +209,30 @@
           Мои задачи
         </h1>
         <!-- <p class="text-muted-foreground">
-          Управляйте своими задачами эффективно
-        </p> -->
+            Управляйте своими задачами эффективно
+          </p> -->
       </div>
 
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
-        <CreateTaskModal />
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => {
+                isCreateTaskModalOpen.set(true);
+              }}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
+            >
+              <Plus class="h-4 w-4" />
+            </Tooltip.Trigger>
+
+            <Tooltip.Content>
+              <p>Добавить новую задачу</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        <!-- <CreateTaskModal /> -->
         <ThemeToggle />
         <AlwaysOnTop />
         <SettingsModal />
@@ -236,7 +263,6 @@
                 <ArrowRight class="h-5 w-5" />
               {/if}
             </Card.Title>
-
           </Card.Header>
           <Card.Content class="px-4">
             <div class="space-y-2">
@@ -308,5 +334,14 @@
   </div>
 </div>
 
-<EditTaskModal editTask={$taskEditOrDelete} />
-<DeleteConfirmDialog delTask={$taskEditOrDelete} />
+{#if $isEditTaskModalOpen}
+  <EditTaskModal editTask={$taskCreateEdit} />
+{/if}
+
+{#if $isDeleteConfirmDialogOpen}
+  <DeleteConfirmDialog delTask={$taskDelete} />
+{/if}
+
+{#if $isCreateTaskModalOpen}
+  <CreateTaskModal createTask={$taskCreateEdit} />
+{/if}

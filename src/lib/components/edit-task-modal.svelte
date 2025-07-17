@@ -9,14 +9,17 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
-    import { tasks, isEditTaskModalOpen } from "$lib/stores/app-state";
+    import {
+        tasks,
+        taskCreateEdit,
+        isEditTaskModalOpen,
+    } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
         getLocalTimeZone,
         CalendarDate,
     } from "@internationalized/date";
-    import { v4 as uuidv4 } from "uuid";
 
     let isPopoverOpen = $state(false);
 
@@ -33,10 +36,17 @@
         year: "numeric",
     });
 
+    function cancelDialog() {
+        resetForm();
+        taskCreateEdit.set(null);
+        isEditTaskModalOpen.set(false);
+    }
+
     function resetForm() {
         title = "";
         description = "";
         value = undefined;
+        editTask = null;
     }
 
     function validate(): boolean {
@@ -84,41 +94,7 @@
                 description: `Задача "${updatedTask.title}" успешно изменена!`,
                 variant: "default",
             });
-
-            isEditTaskModalOpen.set(false);
-            resetForm();
-        } catch (e) {
-            toastStore.add({
-                title: "Ошибка",
-                description: "Ошибка при сохранении задачи",
-                variant: "destructive",
-            });
-            console.error(e);
-        }
-    }
-
-    async function createCopy() {
-        if (!validate()) return;
-
-        try {
-            const newTask: TypesTask = {
-                id: uuidv4(),
-                title: title.trim(),
-                description: description.trim() || undefined,
-                date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: false,
-            };
-
-            tasks.update((currentTasks) => [...currentTasks, newTask]);
-
-            toastStore.add({
-                title: "Создание задачи",
-                description: `Задача "${newTask.title}" успешно создана и добавлена в список задач!`,
-                variant: "default",
-            });
-
-            isEditTaskModalOpen.set(false);
-            resetForm();
+            cancelDialog();
         } catch (e) {
             toastStore.add({
                 title: "Ошибка",
@@ -150,7 +126,12 @@
     });
 </script>
 
-<Dialog.Root bind:open={$isEditTaskModalOpen}>
+<Dialog.Root
+    bind:open={$isEditTaskModalOpen}
+    onOpenChange={(open) => {
+        if (!open) cancelDialog();
+    }}
+>
     <Dialog.Content class="sm:max-w-md">
         <Dialog.Header>
             <Dialog.Title>Редактировать задачу</Dialog.Title>
@@ -224,15 +205,6 @@
                 >
                     Отмена
                 </Dialog.Close>
-
-                <!-- Кнопка - Создать на основе -->
-                <Button
-                    variant="outline"
-                    class="flex-1 transition-all duration-300"
-                    onclick={createCopy}
-                >
-                    Создать на основе
-                </Button>
 
                 <!-- Кнопка - Сохранить -->
                 <Button

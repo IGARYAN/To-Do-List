@@ -2,7 +2,11 @@
   import { AlertTriangle } from "@lucide/svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import { tasks, isDeleteConfirmDialogOpen } from "$lib/stores/app-state";
+  import {
+    tasks,
+    taskDelete,
+    isDeleteConfirmDialogOpen,
+  } from "$lib/stores/app-state";
   import { toastStore } from "$lib/stores/toast-store";
   import { get } from "svelte/store";
 
@@ -23,11 +27,22 @@
       variant: "default",
     });
 
+    cancelDialog();
+  }
+
+  function cancelDialog() {
+    delTask = null;
+    taskDelete.set(null);
     isDeleteConfirmDialogOpen.set(false);
   }
 </script>
 
-<Dialog.Root bind:open={$isDeleteConfirmDialogOpen}>
+<Dialog.Root
+  bind:open={$isDeleteConfirmDialogOpen}
+  onOpenChange={(open) => {
+    if (!open) cancelDialog();
+  }}
+>
   <Dialog.Content>
     <Dialog.Header>
       <Dialog.Title class="flex items-center gap-2">

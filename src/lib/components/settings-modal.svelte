@@ -64,7 +64,7 @@
       variant: "default",
     });
 
-    isSettingsModalOpen = false;
+    closeSettings();
   }
 
   function closeSettings() {
