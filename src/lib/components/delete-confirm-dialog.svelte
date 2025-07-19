@@ -4,13 +4,11 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import {
     tasks,
-    taskDelete,
+    taskCreateEditDelete,
     isDeleteConfirmDialogOpen,
   } from "$lib/stores/app-state";
   import { toastStore } from "$lib/stores/toast-store";
   import { get } from "svelte/store";
-
-  let { delTask } = $props();
 
   /*
     Удаление задачи
@@ -18,12 +16,15 @@
     - Показывает уведомление об удалении
   */
   function deleteTask() {
+    const task = get(taskCreateEditDelete);
+    if (!task) return;
+
     const currentTasks = get(tasks);
-    tasks.set(currentTasks.filter((task) => task.id !== delTask.id));
+    tasks.set(currentTasks.filter((t) => t.id !== task.id));
 
     toastStore.add({
       title: "Удаление задачи",
-      description: `Задача "${delTask.title}" успешно удалена.`,
+      description: `Задача "${task.title}" успешно удалена.`,
       variant: "default",
     });
 
@@ -31,49 +32,50 @@
   }
 
   function cancelDialog() {
-    delTask = null;
-    taskDelete.set(null);
+    taskCreateEditDelete.set(null);
     isDeleteConfirmDialogOpen.set(false);
   }
 </script>
 
-<Dialog.Root
-  bind:open={$isDeleteConfirmDialogOpen}
-  onOpenChange={(open) => {
-    if (!open) cancelDialog();
-  }}
->
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title class="flex items-center gap-2">
-        <AlertTriangle class="h-5 w-5 text-red-500" />
-        Подтвердите удаление
-      </Dialog.Title>
-    </Dialog.Header>
+{#if $taskCreateEditDelete}
+  <Dialog.Root
+    bind:open={$isDeleteConfirmDialogOpen}
+    onOpenChange={(open) => {
+      if (!open) cancelDialog();
+    }}
+  >
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title class="flex items-center gap-2">
+          <AlertTriangle class="h-5 w-5 text-red-500" />
+          Подтвердите удаление
+        </Dialog.Title>
+      </Dialog.Header>
 
-    <div class="py-0">
-      <p class="text-md text-muted-foreground">
-        Вы уверены, что хотите удалить задачу <span class="font-semibold"
-          >"{delTask.title}"</span
-        >?
-        <br />
-        <span class="text-red-500">Это действие нельзя отменить.</span>
-      </p>
-    </div>
+      <div class="py-0">
+        <p class="text-md text-muted-foreground">
+          Вы уверены, что хотите удалить задачу <span class="font-semibold"
+            >"{$taskCreateEditDelete.title}"</span
+          >?
+          <br />
+          <span class="text-red-500">Это действие нельзя отменить.</span>
+        </p>
+      </div>
 
-    <Dialog.Footer>
-      <!-- Кнопка отмены -->
+      <Dialog.Footer>
+        <!-- Кнопка отмены -->
 
-      <Dialog.Close
-        class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
-      >
-        Отмена
-      </Dialog.Close>
+        <Dialog.Close
+          class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
+        >
+          Отмена
+        </Dialog.Close>
 
-      <!-- Кнопка подтверждения удаления -->
-      <Button onclick={deleteTask} class="transition-all duration-300">
-        Удалить
-      </Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog.Root>
+        <!-- Кнопка подтверждения удаления -->
+        <Button onclick={deleteTask} class="transition-all duration-300">
+          Удалить
+        </Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Root>
+{/if}

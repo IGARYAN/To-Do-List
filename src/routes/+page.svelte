@@ -15,9 +15,7 @@
   import {
     tasks,
     settings,
-    taskDelete,
     currentTime,
-    taskCreateEdit,
     isEditTaskModalOpen,
     isCreateTaskModalOpen,
     isDeleteConfirmDialogOpen,
@@ -335,13 +333,13 @@
 </div>
 
 {#if $isEditTaskModalOpen}
-  <EditTaskModal editTask={$taskCreateEdit} />
-{/if}
-
-{#if $isDeleteConfirmDialogOpen}
-  <DeleteConfirmDialog delTask={$taskDelete} />
+  <EditTaskModal />
 {/if}
 
 {#if $isCreateTaskModalOpen}
-  <CreateTaskModal createTask={$taskCreateEdit} />
+  <CreateTaskModal />
+{/if}
+
+{#if $isDeleteConfirmDialogOpen}
+  <DeleteConfirmDialog />
 {/if}

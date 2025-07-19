@@ -11,8 +11,8 @@
     import { toastStore } from "$lib/stores/toast-store";
     import {
         tasks,
-        taskCreateEdit,
         isEditTaskModalOpen,
+        taskCreateEditDelete,
     } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
     import {
@@ -20,10 +20,9 @@
         getLocalTimeZone,
         CalendarDate,
     } from "@internationalized/date";
+    import { get } from "svelte/store";
 
     let isPopoverOpen = $state(false);
-
-    let { editTask } = $props();
 
     // Реактивные переменные
     let value = $state<CalendarDate | undefined>(undefined);
@@ -37,8 +36,8 @@
     });
 
     function cancelDialog() {
+        taskCreateEditDelete.set(null);
         resetForm();
-        taskCreateEdit.set(null);
         isEditTaskModalOpen.set(false);
     }
 
@@ -46,7 +45,6 @@
         title = "";
         description = "";
         value = undefined;
-        editTask = null;
     }
 
     function validate(): boolean {
@@ -74,19 +72,20 @@
     async function saveTask() {
         if (!validate()) return;
 
+        const task = get(taskCreateEditDelete);
+        if (!task) return;
+
         try {
             const updatedTask: TypesTask = {
-                id: editTask.id, // сохраняем тот же id
+                id: task.id, // сохраняем тот же id
                 title: title.trim(),
                 description: description.trim() || undefined,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: editTask.completed, // сохранить состояние выполнения
+                completed: task.completed, // сохранить состояние выполнения
             };
 
             tasks.update((currentTasks) =>
-                currentTasks.map((task) =>
-                    task.id === editTask.id ? updatedTask : task,
-                ),
+                currentTasks.map((t) => (t.id === task.id ? updatedTask : t)),
             );
 
             toastStore.add({
@@ -106,10 +105,10 @@
     }
 
     $effect(() => {
-        if ($isEditTaskModalOpen && editTask) {
-            title = editTask.title;
-            description = editTask.description || "";
-            const taskDate = new Date(editTask.date);
+        if ($isEditTaskModalOpen && $taskCreateEditDelete) {
+            title = $taskCreateEditDelete.title;
+            description = $taskCreateEditDelete.description || "";
+            const taskDate = new Date($taskCreateEditDelete.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
                 taskDate.getMonth() + 1,

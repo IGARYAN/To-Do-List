@@ -18,18 +18,14 @@
   } from "@lucide/svelte"; // Иконки
   import {
     tasks,
-    taskDelete,
     currentTime,
-    taskCreateEdit,
     isEditTaskModalOpen,
+    taskCreateEditDelete,
     isCreateTaskModalOpen,
     isDeleteConfirmDialogOpen,
   } from "$lib/stores/app-state";
 
   let { task } = $props();
-
-  // Реактивное состояние для отображения кнопок действий при наведении
-  let isHovered = $state(false);
 
   /*
     Переключение статуса выполнения задачи
@@ -104,19 +100,19 @@
 
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
-    taskCreateEdit.set(task);
+    taskCreateEditDelete.set(task);
     isEditTaskModalOpen.set(true);
   }
 
   // Функция открывает диалог создания задачи из существующей задачи
   function CreateTaskModalOpen() {
-    taskCreateEdit.set(task);
+    taskCreateEditDelete.set(task);
     isCreateTaskModalOpen.set(true);
   }
 
   // Функция открывает диалог подтверждения удаления задачи
   function DeleteConfirmDialogOpen() {
-    taskDelete.set(task);
+    taskCreateEditDelete.set(task);
     isDeleteConfirmDialogOpen.set(true);
   }
 </script>
@@ -124,8 +120,6 @@
 <Card.Root
   class={`px-2 py-2 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10 
   ${isOverdue ? "border-red-300 dark:border-red-900" : ""}`}
-  onmouseenter={() => (isHovered = true)}
-  onmouseleave={() => (isHovered = false)}
 >
   <div class="flex items-center gap-3">
     <!-- Кнопка переключения статуса выполнения -->
@@ -199,14 +193,10 @@
     </div>
 
     <!-- Кнопки действий (показываются при наведении) -->
-    <div
-      class={`flex items-center gap-1 transition-opacity duration-300 ${
-        isHovered ? "opacity-100" : "opacity-0"
-      }`}
-    >
+    <div class="flex items-center gap-1 transition-opacity duration-300">
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
-          class={`transition-all duration-300 relative ${buttonVariants({ variant: "ghost", size: "icon" })}`}
+          class={`transition-all duration-300 relative text-muted-foreground ${buttonVariants({ variant: "ghost", size: "icon" })}`}
           aria-label="Меню"
         >
           <EllipsisVertical class="h-4 w-4" />

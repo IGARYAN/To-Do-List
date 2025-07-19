@@ -11,7 +11,7 @@
     import { toastStore } from "$lib/stores/toast-store";
     import {
         tasks,
-        taskCreateEdit,
+        taskCreateEditDelete,
         isCreateTaskModalOpen,
     } from "$lib/stores/app-state";
     import type { TypesTask } from "$lib/types/types-task";
@@ -23,8 +23,6 @@
     import { v4 as uuidv4 } from "uuid";
 
     let isPopoverOpen = $state(false);
-
-    let { createTask = null } = $props();
 
     // Реактивные переменные
     let value = $state<CalendarDate | undefined>(undefined);
@@ -38,8 +36,8 @@
     });
 
     function cancelDialog() {
+        taskCreateEditDelete.set(null);
         resetForm();
-        taskCreateEdit.set(null);
         isCreateTaskModalOpen.set(false);
     }
 
@@ -47,7 +45,6 @@
         title = "";
         description = "";
         value = undefined;
-        createTask = null;
     }
 
     function validate(): boolean {
@@ -102,10 +99,10 @@
     }
 
     $effect(() => {
-        if ($isCreateTaskModalOpen && createTask) {
-            title = createTask.title;
-            description = createTask.description || "";
-            const taskDate = new Date(createTask.date);
+        if ($isCreateTaskModalOpen && $taskCreateEditDelete) {
+            title = $taskCreateEditDelete.title;
+            description = $taskCreateEditDelete.description || "";
+            const taskDate = new Date($taskCreateEditDelete.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
                 taskDate.getMonth() + 1,

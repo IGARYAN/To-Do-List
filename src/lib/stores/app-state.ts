@@ -5,8 +5,7 @@
     export const isEditTaskModalOpen = writable(false);                     // Переменная определяет открыт диалог изменения задачи или нет
     export const isCreateTaskModalOpen = writable(false);                   // Переменная определяет открыт диалог создания задачи или нет
     export const isDeleteConfirmDialogOpen = writable(false);               // Переменная определяет открыт диалог удаления задачи или нет
-    export const taskCreateEdit = writable<TypesTask | null>(null);         // Переменная для передачи задачи для создания из редактирования или удаления
-    export const taskDelete = writable<TypesTask | null>(null);             // Переменная для передачи задачи для создания из редактирования или удаления
+    export const taskCreateEditDelete = writable<TypesTask | null>(null);   // Переменная для передачи задачи для создания и редактирования или удаления
 
     export const currentTime = writable(new Date());                        // переменная для отслеживания времени
     export const currentPass = writable<string | null>(null);               // Текущий пароль
