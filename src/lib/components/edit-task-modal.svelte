@@ -48,25 +48,39 @@
     }
 
     function validate(): boolean {
+        // Проверка: поле "Название задачи" не должно быть пустым
         if (!title.trim()) {
             toastStore.add({
-                title: "Ошибка",
+                title: "Ошибка изменения задачи",
                 description: "Название задачи обязательно!",
                 variant: "destructive",
             });
             return false;
         }
-
+        // Проверка: выбрана ли дата выполнения
         if (!value) {
             toastStore.add({
-                title: "Ошибка",
-                description: "Укажите дату выполнения!",
+                title: "Ошибка изменения задачи",
+                description: "Укажите дату выполнения задачи!",
                 variant: "destructive",
             });
             return false;
         }
-
-        return true;
+        // Преобразуем выбранную дату из CalendarDate в обычный Date в локальной временной зоне
+        const selectedDate = value.toDate(getLocalTimeZone());
+        // Получаем сегодняшнюю дату и сбрасываем время, чтобы сравнивать только по дате
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        // Проверка: дата не должна быть в прошлом
+        if (selectedDate < today) {
+            toastStore.add({
+                title: "Ошибка изменения задачи",
+                description: "Дата выполнения не может быть в прошлом!",
+                variant: "destructive",
+            });
+            return false;
+        }
+        return true; // Все проверки пройдены
     }
 
     async function saveTask() {
@@ -81,7 +95,7 @@
                 title: title.trim(),
                 description: description.trim() || undefined,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
-                completed: task.completed, // сохранить состояние выполнения
+                completed: false,
             };
 
             tasks.update((currentTasks) =>

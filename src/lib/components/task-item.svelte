@@ -203,10 +203,12 @@
         </DropdownMenu.Trigger>
         <DropdownMenu.Content align="end">
           <!-- Пункт меню редактирования задачи -->
-          <DropdownMenu.Item onclick={EditTaskModalOpen}>
-            <Pencil class="h-4 w-4" />
-            <span>Изменить</span>
-          </DropdownMenu.Item>
+          {#if !task.completed}
+            <DropdownMenu.Item onclick={EditTaskModalOpen}>
+              <Pencil class="h-4 w-4" />
+              <span>Изменить</span>
+            </DropdownMenu.Item>
+          {/if}
 
           <!-- Пункт меню создания задачи из -->
           <DropdownMenu.Item onclick={CreateTaskModalOpen}>

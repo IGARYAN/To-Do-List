@@ -44,7 +44,7 @@
       if (!open) cancelDialog();
     }}
   >
-    <Dialog.Content>
+    <Dialog.Content class="sm:max-w-md">
       <Dialog.Header>
         <Dialog.Title class="flex items-center gap-2">
           <AlertTriangle class="h-5 w-5 text-red-500" />

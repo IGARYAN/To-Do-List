@@ -55,8 +55,8 @@
     // Инициализация таймера, Ставим таймер до полуночи
     setupMidnightTimer();
 
-    // Отписка при размонтировании
     return () => {
+      // Отписка при размонтировании
       unsubscribeSettings();
       if (midnightTimerId) {
         // Очистка
@@ -77,8 +77,8 @@
       0,
       0,
       0,
-      0, // Ровно 00:00:00.000
-    );
+      0,
+    ); // Ровно 00:00:00.000
     return midnight.getTime() - now.getTime() + bufferMs;
   }
 
@@ -104,11 +104,12 @@
     */
   $effect(() => {
     if ($tasks.length === 0) return;
-
     const now = new Date();
+    now.setHours(0, 0, 0, 0); // сравнение по дате, не по времени
     const updatedTasks = $tasks.filter((task) => {
       if (task.completed && task.completedAt) {
         const completedDate = new Date(task.completedAt);
+        completedDate.setHours(0, 0, 0, 0);
         const daysDiff = Math.floor(
           (now.getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24),
         );
