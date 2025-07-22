@@ -6,8 +6,7 @@ export interface TypesSettings {
     saveWindowState: boolean;                   // Сохранять состояние окна
     alwaysOnTop: boolean;                       // Всегда поверх всех окон
 
-    // Состояние окна:
-    windowState?: {
+    windowState?: {                             // Состояние окна
         x: number;
         y: number;
         width: number;

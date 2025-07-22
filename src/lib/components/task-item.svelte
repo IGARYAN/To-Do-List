@@ -7,6 +7,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
+  import { ColorMap } from '$lib/types/color-map';
   import {
     Plus,
     Circle,
@@ -118,26 +119,34 @@
 </script>
 
 <Card.Root
-  class={`px-2 py-2 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10 
+  class={`flex px-2 py-2 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10 
   ${isOverdue ? "border-red-300 dark:border-red-900" : ""}`}
 >
-  <div class="flex items-center gap-3">
-    <!-- Кнопка переключения статуса выполнения -->
-    <Button
-      variant="ghost"
-      size="icon"
-      onclick={() => toggleTask(task.id)}
-      class="h-8 w-8 p-0 hover:bg-transparent"
-      aria-label={task.completed
-        ? "Отметить как невыполненную"
-        : "Отметить как выполненную"}
-    >
-      {#if task.completed}
-        <CircleCheckBig class="h-5 w-5 text-green-500" />
-      {:else}
-        <Circle class="h-5 w-5 text-muted-foreground hover:text-primary" />
-      {/if}
-    </Button>
+  <div class="flex items-stretch gap-3 h-full">
+    <div class="flex items-center">
+      <!-- Кнопка переключения статуса выполнения -->
+      <Button
+        variant="ghost"
+        size="icon"
+        onclick={() => toggleTask(task.id)}
+        class="h-8 w-8 p-0 hover:bg-transparent -mr-2"
+        aria-label={task.completed
+          ? "Отметить как невыполненную"
+          : "Отметить как выполненную"}
+      >
+        {#if task.completed}
+          <CircleCheckBig class="h-5 w-5 text-green-500" />
+        {:else}
+          <Circle class="h-5 w-5 text-muted-foreground hover:text-primary" />
+        {/if}
+      </Button>
+    </div>
+
+    <!-- Цветная полоса -->
+    <div
+      class="-mr-1 w-2 rounded"
+      style="background-color: {ColorMap[task.color ?? 'gray']}"
+    ></div>
 
     <!-- Основная информация о задаче -->
     <div class="flex-1 min-w-0">

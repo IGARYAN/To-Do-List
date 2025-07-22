@@ -9,12 +9,14 @@
     import { Textarea } from "$lib/components/ui/textarea";
     import DatePicker from "$lib/components/ui/calendar/calendar.svelte";
     import { toastStore } from "$lib/stores/toast-store";
+    import ColorPicker from "$lib/components/color-picker.svelte";
+    import type { TypesTask } from "$lib/types/types-task";
     import {
         tasks,
+        selectedColor,
         isEditTaskModalOpen,
         taskCreateEditDelete,
     } from "$lib/stores/app-state";
-    import type { TypesTask } from "$lib/types/types-task";
     import {
         DateFormatter,
         getLocalTimeZone,
@@ -36,6 +38,7 @@
     });
 
     function cancelDialog() {
+        selectedColor.set(undefined);
         taskCreateEditDelete.set(null);
         resetForm();
         isEditTaskModalOpen.set(false);
@@ -94,6 +97,7 @@
                 id: task.id, // сохраняем тот же id
                 title: title.trim(),
                 description: description.trim() || undefined,
+                color: $selectedColor,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
                 completed: false,
             };
@@ -122,6 +126,7 @@
         if ($isEditTaskModalOpen && $taskCreateEditDelete) {
             title = $taskCreateEditDelete.title;
             description = $taskCreateEditDelete.description || "";
+            $selectedColor = $taskCreateEditDelete.color;
             const taskDate = new Date($taskCreateEditDelete.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
@@ -154,13 +159,17 @@
             <!-- Название -->
             <div class="space-y-2">
                 <Label for="title">Название задачи</Label>
-                <Input
-                    id="title"
-                    bind:value={title}
-                    autocomplete="off"
-                    placeholder="Введите название задачи..."
-                    class="transition-all duration-300"
-                />
+                <div class="flex items-center gap-2">
+                    <Input
+                        id="title"
+                        bind:value={title}
+                        autocomplete="off"
+                        placeholder="Введите название задачи..."
+                        class="transition-all duration-300"
+                    />
+                    <!-- Компонент выбора цвета -->
+                    <ColorPicker />
+                </div>
             </div>
 
             <!-- Описание -->
