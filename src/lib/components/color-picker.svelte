@@ -40,7 +40,7 @@
         <div
             class="w-6 h-6 rounded"
             style="background-color: {ColorMap[
-                $selectedColor || 'gray'
+                $selectedColor || 'red'
             ]}"
         ></div>
     </Popover.Trigger>

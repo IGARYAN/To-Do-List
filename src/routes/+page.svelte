@@ -104,7 +104,7 @@
     */
   $effect(() => {
     if ($tasks.length === 0) return;
-    const now = new Date();
+    const now = new Date($currentTime);
     now.setHours(0, 0, 0, 0); // сравнение по дате, не по времени
     const updatedTasks = $tasks.filter((task) => {
       if (task.completed && task.completedAt) {
@@ -124,7 +124,7 @@
       $tasks = updatedTasks;
       toastStore.add({
         title: "Авто удаление задач",
-        description: `Удалено ${deletedCount} выполненных задач.`,
+        description: `Удален${deletedCount === 1 ? "а" : "о"} ${deletedCount} выполнен${deletedCount === 1 ? "ная задача" : "ных задач"}`,
         variant: "default",
       });
     }

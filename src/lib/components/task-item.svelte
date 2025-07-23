@@ -145,7 +145,7 @@
     <!-- Цветная полоса -->
     <div
       class="-mr-1 w-2 rounded"
-      style="background-color: {ColorMap[task.color ?? 'gray']}"
+      style="background-color: {ColorMap[task.color ?? 'red']}"
     ></div>
 
     <!-- Основная информация о задаче -->
