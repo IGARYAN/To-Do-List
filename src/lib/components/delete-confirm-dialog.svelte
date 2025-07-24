@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AlertTriangle } from "@lucide/svelte";
-  import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import { buttonVariants } from "$lib/components/ui/button";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
   import {
     tasks,
     taskCreateEditDelete,
@@ -10,11 +10,6 @@
   import { toastStore } from "$lib/stores/toast-store";
   import { get } from "svelte/store";
 
-  /*
-    Удаление задачи
-    - Удаляет задачу из хранилища по ID
-    - Показывает уведомление об удалении
-  */
   function deleteTask() {
     const task = get(taskCreateEditDelete);
     if (!task) return;
@@ -38,44 +33,44 @@
 </script>
 
 {#if $taskCreateEditDelete}
-  <Dialog.Root
+  <AlertDialog.Root
     bind:open={$isDeleteConfirmDialogOpen}
     onOpenChange={(open) => {
       if (!open) cancelDialog();
     }}
   >
-    <Dialog.Content class="sm:max-w-md">
-      <Dialog.Header>
-        <Dialog.Title class="flex items-center gap-2">
+    <AlertDialog.Content class="">
+      <AlertDialog.Header>
+        <AlertDialog.Title class="flex items-center gap-2">
           <AlertTriangle class="h-5 w-5 text-red-500" />
           Подтвердите удаление
-        </Dialog.Title>
-      </Dialog.Header>
+        </AlertDialog.Title>
+      </AlertDialog.Header>
 
       <div class="py-0">
-        <p class="text-md text-muted-foreground">
+        <AlertDialog.Description class="text-md">
           Вы уверены, что хотите удалить задачу <span class="font-semibold"
             >"{$taskCreateEditDelete.title}"</span
           >?
           <br />
           <span class="text-red-500">Это действие нельзя отменить.</span>
-        </p>
+        </AlertDialog.Description>
       </div>
 
-      <Dialog.Footer>
-        <!-- Кнопка отмены -->
-
-        <Dialog.Close
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel
           class={`transition-all duration-300 ${buttonVariants({ variant: "outline" })}`}
         >
           Отмена
-        </Dialog.Close>
+        </AlertDialog.Cancel>
 
-        <!-- Кнопка подтверждения удаления -->
-        <Button onclick={deleteTask} class="transition-all duration-300">
+        <AlertDialog.Action
+          onclick={deleteTask}
+          class={`transition-all duration-300 ${buttonVariants({ variant: "default" })}`}
+        >
           Удалить
-        </Button>
-      </Dialog.Footer>
-    </Dialog.Content>
-  </Dialog.Root>
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog.Root>
 {/if}

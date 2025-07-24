@@ -122,6 +122,26 @@
         }
     }
 
+    function setToday() {
+        value = new CalendarDate(
+            new Date().getFullYear(),
+            new Date().getMonth() + 1,
+            new Date().getDate(),
+        );
+        isPopoverOpen = false;
+    }
+
+    function setTomorrow() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        value = new CalendarDate(
+            tomorrow.getFullYear(),
+            tomorrow.getMonth() + 1,
+            tomorrow.getDate(),
+        );
+        isPopoverOpen = false;
+    }
+
     $effect(() => {
         if ($isEditTaskModalOpen && $taskCreateEditDelete) {
             title = $taskCreateEditDelete.title;
@@ -214,6 +234,22 @@
                             weekdayFormat="long"
                             monthFormat="long"
                         />
+                        <div
+                            class="flex gap-2 items-center justify-center w-full p-2"
+                        >
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="flex-1"
+                                onclick={setToday}>Сегодня</Button
+                            >
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="flex-1"
+                                onclick={setTomorrow}>Завтра</Button
+                            >
+                        </div>
                     </Popover.Content>
                 </Popover.Root>
             </div>
