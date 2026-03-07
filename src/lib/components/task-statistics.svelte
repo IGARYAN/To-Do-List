@@ -17,7 +17,7 @@
                     <p class="text-md text-muted-foreground">Будущие</p>
                     <Clock class="h-6 w-6 text-orange-500" />
                 </div>
-                <p class="text-2xl font-bold">{Future.length}</p>
+                <p class="text-3xl font-bold">{Future.length}</p>
             </div>
         </Card.Content>
     </Card.Root>
@@ -32,7 +32,7 @@
                     <p class="text-md text-muted-foreground">Просрочено</p>
                     <CircleX class="h-6 w-6 text-red-500" />
                 </div>
-                <p class="text-2xl font-bold">{Overdue.length}</p>
+                <p class="text-3xl font-bold">{Overdue.length}</p>
             </div>
         </Card.Content>
     </Card.Root>
@@ -47,7 +47,7 @@
                     <p class="text-md text-muted-foreground">На сегодня</p>
                     <Calendar class="h-6 w-6 text-blue-500" />
                 </div>
-                <p class="text-2xl font-bold">{Today.length}</p>
+                <p class="text-3xl font-bold">{Today.length}</p>
             </div>
         </Card.Content>
     </Card.Root>
@@ -62,7 +62,7 @@
                     <p class="text-md text-muted-foreground">Выполнено</p>
                     <CircleCheckBig class="h-6 w-6 text-green-500" />
                 </div>
-                <p class="text-2xl font-bold">{Completed.length}</p>
+                <p class="text-3xl font-bold">{Completed.length}</p>
             </div>
         </Card.Content>
     </Card.Root>

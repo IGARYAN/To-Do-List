@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { get } from "svelte/store";
-    import { currentPass, tasks } from "$lib/stores/app-state";
+    import { taskStore } from "$lib/stores/task-store.svelte";
     import { SquareAsterisk } from "@lucide/svelte";
     import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
     import * as Dialog from "$lib/components/ui/dialog/index.js";
     import { toastStore } from "$lib/stores/toast-store";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
-    import { saveTask } from "$lib/stores/task-store";
 
     let isPassModalOpen = $state(false);
     let newPass = $state("");
@@ -71,8 +69,8 @@
             });
             return;
         }
-        currentPass.set(newPass);
-        saveTask(get(tasks)); // Пересохраняем файл в зашифрованном виде
+        taskStore.setPassword(newPass);
+        taskStore.saveTask(); // Пересохраняем файл в зашифрованном виде
         toastStore.add({
             title: "Создание пароля",
             description: "Новый пароль успешно создан.",
@@ -84,9 +82,9 @@
     // Проверка пароля для отключения входа с паролем
     function verifyPass() {
         if (!validatePass(inputPass)) return;
-        if (inputPass === $currentPass) {
-            currentPass.set(null);
-            saveTask(get(tasks)); // Пересохраняем файл в незашифрованном виде
+        if (inputPass === taskStore.currentPass) {
+            taskStore.setPassword(null);
+            taskStore.saveTask(); // Пересохраняем файл в незашифрованном виде
             toastStore.add({
                 title: "Верификация пароля",
                 description: "Вход с паролем успешно отключен.",
@@ -107,19 +105,19 @@
     <Dialog.Trigger
         onclick={() => (isPassModalOpen = true)}
         class={`flex-1 transition-all duration-300 ${
-            $currentPass
+            taskStore.currentPass
                 ? buttonVariants({ variant: "default" })
                 : buttonVariants({ variant: "outline" })
         }`}
     >
-        {#if $currentPass}
+        {#if taskStore.currentPass}
             Отключить вход с паролем
         {:else}
             Включить вход с паролем
         {/if}
     </Dialog.Trigger>
     <Dialog.Content class="w-sm">
-        {#if !$currentPass}
+        {#if !taskStore.currentPass}
             <div class="flex flex-col items-center gap-2">
                 <div class="flex items-center justify-center rounded-sm">
                     <SquareAsterisk class="size-6" />

@@ -7,23 +7,36 @@
   import { Switch } from "$lib/components/ui/switch/index.js";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { settings } from "$lib/stores/app-state";
+  import { settingsStore } from "$lib/stores/settings-store.svelte";
   import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
 
   // Локальные копии полей
   let isSettingsModalOpen = $state(false);
-
   let localAutoDeleteDays = $state("");
   let localFutureDays = $state("");
   let localSaveWindowState = $state(false);
 
+  // Флаг для детекта именно момента открытия модалки.
+  // Нужен, чтобы не перезаписывать поля при каждом вводе пользователя.
+  let wasSettingsModalOpen = false;
+
   // При открытии модалки загружаем актуальные настройки
   $effect(() => {
-    if (isSettingsModalOpen) {
-      localAutoDeleteDays = String($settings.autoDeleteDays);
-      localFutureDays = String($settings.futureDays);
-      localSaveWindowState = $settings.saveWindowState;
+    // Инициализируем локальные поля только на переходе false -> true.
+    // Это устраняет проблему, когда реактивный эффект сбрасывал ввод пользователя.
+    if (isSettingsModalOpen && !wasSettingsModalOpen) {
+      localAutoDeleteDays = String(settingsStore.settings.autoDeleteDays);
+      localFutureDays = String(settingsStore.settings.futureDays);
+      localSaveWindowState = settingsStore.settings.saveWindowState;
+
+      console.log("[SettingsModal] Инициализация локальных полей при открытии (false -> true)", {
+        autoDeleteDaysFromStore: settingsStore.settings.autoDeleteDays,
+        futureDaysFromStore: settingsStore.settings.futureDays,
+        saveWindowStateFromStore: settingsStore.settings.saveWindowState,
+      });
     }
+
+    wasSettingsModalOpen = isSettingsModalOpen;
   });
 
   function validate() {
@@ -51,12 +64,19 @@
 
   function saveSettings() {
     if (!validate()) return;
-    settings.update((s) => ({
-      ...s,
+
+    console.log("[SettingsModal] Сохраняем настройки из локального состояния", {
+      autoDeleteDays: localAutoDeleteDays,
+      futureDays: localFutureDays,
+      saveWindowState: localSaveWindowState,
+    });
+    
+    // Используем метод updateSettings из стора
+    settingsStore.updateSettings({
       autoDeleteDays: Number(localAutoDeleteDays),
       futureDays: Number(localFutureDays),
       saveWindowState: localSaveWindowState,
-    }));
+    });
 
     toastStore.add({
       title: "Настройки успешно сохранены",

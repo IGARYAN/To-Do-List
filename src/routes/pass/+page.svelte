@@ -3,9 +3,8 @@
     import { Button } from "$lib/components/ui/button/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { toastStore } from "$lib/stores/toast-store";
-    import { currentPass } from "$lib/stores/app-state";
-    import { loadTask } from "$lib/stores/task-store";
-    import { goto } from '$app/navigation';
+    import { taskStore } from "$lib/stores/task-store.svelte";
+    import { goto } from "$app/navigation";
 
     let password = $state("");
 
@@ -45,14 +44,15 @@
     const handleSubmit = async () => {
         password = password.trim().replace(/\s+/g, "");
         if (validatePassword(password)) {
-            currentPass.set(password);
+            // Устанавливаем пароль через стор задач
+            taskStore.setPassword(password);
             console.log("🔐 Попытка расшифровать задачи с новым паролем...");
 
-            const success = await loadTask();
+            const success = await taskStore.loadTask();
 
             if (success) {
                 console.log("✅ Пароль принят, задачи загружены.");
-                goto('/'); // Переход на главную
+                goto("/"); // Переход на главную
             } else {
                 console.warn("❌ Пароль неверный. Ждём новый ввод.");
                 toastStore.add({

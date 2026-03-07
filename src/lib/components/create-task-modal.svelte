@@ -11,12 +11,8 @@
     import ColorPicker from "$lib/components/color-picker.svelte";
     import { toastStore } from "$lib/stores/toast-store";
     import type { TypesTask } from "$lib/types/types-task";
-    import {
-        tasks,
-        selectedColor,
-        taskCreateEditDelete,
-        isCreateTaskModalOpen,
-    } from "$lib/stores/app-state";
+    import { taskStore } from "$lib/stores/task-store.svelte";
+    import { appStateStore } from "$lib/stores/app-state.svelte";
     import {
         CalendarDate,
         DateFormatter,
@@ -38,10 +34,8 @@
     });
 
     function cancelDialog() {
-        selectedColor.set(undefined);
-        taskCreateEditDelete.set(null);
         resetForm();
-        isCreateTaskModalOpen.set(false);
+        appStateStore.closeCreateTaskModal();
     }
 
     function resetForm() {
@@ -94,12 +88,13 @@
                 id: uuidv4(),
                 title: title.trim(),
                 description: description.trim() || undefined,
-                color: $selectedColor,
+                color: appStateStore.selectedColor,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
                 completed: false,
             };
 
-            tasks.update((currentTasks) => [...currentTasks, newTask]);
+            // Используем метод addTask из стора
+            taskStore.addTask(newTask);
 
             toastStore.add({
                 title: "Создание задачи",
@@ -138,11 +133,13 @@
     }
 
     $effect(() => {
-        if ($isCreateTaskModalOpen && $taskCreateEditDelete) {
-            title = $taskCreateEditDelete.title;
-            description = $taskCreateEditDelete.description || "";
-            $selectedColor = $taskCreateEditDelete.color;
-            const taskDate = new Date($taskCreateEditDelete.date);
+        if (
+            appStateStore.isCreateTaskModalOpen &&
+            appStateStore.taskCreateEditDelete
+        ) {
+            title = appStateStore.taskCreateEditDelete.title;
+            description = appStateStore.taskCreateEditDelete.description || "";
+            const taskDate = new Date(appStateStore.taskCreateEditDelete.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
                 taskDate.getMonth() + 1,
@@ -160,7 +157,7 @@
 </script>
 
 <Dialog.Root
-    bind:open={$isCreateTaskModalOpen}
+    bind:open={appStateStore.isCreateTaskModalOpen}
     onOpenChange={(open) => {
         if (!open) cancelDialog();
     }}

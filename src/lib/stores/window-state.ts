@@ -1,14 +1,12 @@
 import { getCurrentWindow, LogicalSize, LogicalPosition } from "@tauri-apps/api/window";
-import { saveSettings } from '$lib/stores/settings-store';
-import { settings } from "$lib/stores/app-state";
-import { get } from "svelte/store";
+import { settingsStore } from "./settings-store.svelte";
 
 const appWindow = getCurrentWindow();
 
 /** Сохраняем состояние окна */
 export async function saveWindow() {
     try {
-        const currentSettings = get(settings);
+        const currentSettings = settingsStore.settings;
         if (!currentSettings.saveWindowState) {
             console.log("Сохранение состояния окна отключено в настройках");
             return;
@@ -28,15 +26,11 @@ export async function saveWindow() {
 
         console.log("Сохранение состояния окна:", { x, y, width, height, isMaximized });
 
-        // Обновляем состояние через реактивное обновление
-        const newSettings = {
-            ...currentSettings,
-            windowState: { x, y, width, height, isMaximized }
-        };
-        settings.set(newSettings);
-
-        // 🔥 Принудительно сохраняем на диск
-        await saveSettings(newSettings);
+        // Обновляем состояние через стор
+        settingsStore.set("windowState", { x, y, width, height, isMaximized });
+        
+        // Принудительно сохраняем на диск (вызываем метод saveSettings)
+        await settingsStore.saveSettings();
     } catch (e) {
         console.error("Ошибка при сохранении окна:", e);
     }
@@ -45,7 +39,7 @@ export async function saveWindow() {
 /** Восстанавливаем состояние окна */
 export async function restoreWindow() {
     try {
-        const currentSettings = get(settings);
+        const currentSettings = settingsStore.settings;
         if (currentSettings.saveWindowState && currentSettings.windowState) {
             const { x, y, width, height, isMaximized } = currentSettings.windowState;
 

@@ -1,9 +1,3 @@
-// Используем только пользовательский пароль для генерации ключа
-
-// ✅ Постоянный IV (инициализационный вектор), длиной 12 байт (96 бит — стандарт для AES-GCM)
-// IV должен быть неизменным для этого типа реализации, так как мы используем PBKDF2 + соль для уникальности
-const STATIC_IV = Uint8Array.from([21, 42, 63, 84, 105, 126, 147, 168, 189, 210, 231, 252]);
-
 // ================== ШИФРОВАНИЕ ==================
 
 /**
@@ -12,22 +6,24 @@ const STATIC_IV = Uint8Array.from([21, 42, 63, 84, 105, 126, 147, 168, 189, 210,
  * param userPin - Пароль, вводимый пользователем (используется для генерации ключа)
  * returns Зашифрованный текст в base64
  */
-export async function encryptData(data: any, userPin: string): Promise<{ cipher: string }> {
-    // Генерируем криптографический ключ с учётом PIN как соли
-    const key = await getKey(userPin);
-
-    // Преобразуем данные в байтовый массив
+export async function encryptData(data: any, userPin: string): Promise<{ cipher: string, iv: string, salt: string }> {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    
+    const key = await getKey(userPin, salt.buffer as ArrayBuffer);
     const encodedData = new TextEncoder().encode(JSON.stringify(data));
-
-    // Шифруем данные с использованием AES-GCM и постоянного IV
+    
     const cipherBuffer = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: STATIC_IV },
+        { name: "AES-GCM", iv },
         key,
         encodedData
     );
 
-    // Возвращаем зашифрованную строку в base64
-    return { cipher: bufferToBase64(cipherBuffer) };
+    return {
+        cipher: bufferToBase64(cipherBuffer),
+        iv: bufferToBase64(iv.buffer as ArrayBuffer),
+        salt: bufferToBase64(salt.buffer as ArrayBuffer),
+    };
 }
 
 // ================== ДЕШИФРОВАНИЕ ==================
@@ -38,25 +34,21 @@ export async function encryptData(data: any, userPin: string): Promise<{ cipher:
  * param userPin - Пароль, вводимый пользователем (используется для генерации ключа)
  * returns Объект { success: true/false, data: расшифрованные данные или null }
  */
-export async function decryptData(cipher: string, userPin: string): Promise<{ success: boolean; data: any | null }> {
+export async function decryptData(cipher: string, userPin: string, iv: string, salt: string): Promise<{ success: boolean; data: any | null }> {
     try {
-        // Генерируем ключ на основе введённого PIN
-        const key = await getKey(userPin);
-
-        // Пытаемся расшифровать данные
+        const saltBuffer = base64ToBuffer(salt);
+        const ivBuffer = base64ToBuffer(iv);
+        
+        const key = await getKey(userPin, saltBuffer);
+        
         const decryptedBuffer = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: STATIC_IV },
+            { name: "AES-GCM", iv: new Uint8Array(ivBuffer) },
             key,
             base64ToBuffer(cipher)
         );
 
-        // Декодируем расшифрованный результат в строку
-        const decoded = new TextDecoder().decode(decryptedBuffer);
-
-        // Возвращаем успешно расшифрованные данные
-        return { success: true, data: JSON.parse(decoded) };
+        return { success: true, data: JSON.parse(new TextDecoder().decode(decryptedBuffer)) };
     } catch (err) {
-        // Если PIN неправильный или данные повреждены, дешифровка вызовет ошибку
         console.error("❌ Ошибка при расшифровке:", err);
         return { success: false, data: null };
     }
@@ -69,10 +61,9 @@ export async function decryptData(cipher: string, userPin: string): Promise<{ su
  * param password - Пароль, введённый пользователем
  * returns Готовый криптографический ключ
  */
-async function getKey(password: string): Promise<CryptoKey> {
+async function getKey(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
     const encoder = new TextEncoder();
-
-    // Импортируем "сырой" ключ из постоянного пароля
+    
     const keyMaterial = await window.crypto.subtle.importKey(
         "raw",
         encoder.encode(password),
@@ -81,16 +72,15 @@ async function getKey(password: string): Promise<CryptoKey> {
         ["deriveKey"]
     );
 
-    // Создаём конечный ключ, используя PBKDF2 с PIN в качестве соли
     return window.crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt: encoder.encode("static-salt-value"), // Используем статическую соль
-            iterations: 50000, // Количество итераций для замедления перебора
+            salt: salt,
+            iterations: 100000,
             hash: "SHA-256",
         },
         keyMaterial,
-        { name: "AES-GCM", length: 256 }, // Используем AES-GCM 256 бит
+        { name: "AES-GCM", length: 256 },
         false,
         ["encrypt", "decrypt"]
     );

@@ -3,7 +3,7 @@
     import { onMount } from "svelte";
     import { Check } from "@lucide/svelte";
     import { buttonVariants } from "$lib/components/ui/button";
-    import { selectedColor } from "$lib/stores/app-state";
+    import { appStateStore } from "$lib/stores/app-state.svelte";
     import { ColorMap } from '$lib/types/color-map';
 
     // Переменные
@@ -14,9 +14,9 @@
 
     // При монтировании — если цвет не выбран, выбираем случайный
     onMount(() => {
-        if (!$selectedColor) {
+        if (!appStateStore.selectedColor) {
             const random = getRandomColor();
-            $selectedColor = random;
+            appStateStore.selectedColor = random;
         }
     });
 
@@ -26,7 +26,7 @@
     }
 
     function selectColor(color: string) {
-        $selectedColor = color;
+        appStateStore.selectedColor = color;
         isOpen = false;
     }
 </script>
@@ -40,7 +40,7 @@
         <div
             class="w-6 h-6 rounded"
             style="background-color: {ColorMap[
-                $selectedColor || 'red'
+                appStateStore.selectedColor || 'red'
             ]}"
         ></div>
     </Popover.Trigger>
@@ -54,7 +54,7 @@
                 onclick={() => selectColor(color)}
                 aria-label={`Выбрать цвет ${color}`}
             >
-                {#if color === $selectedColor}
+                {#if color === appStateStore.selectedColor}
                     <Check class="absolute inset-0 m-auto h-4 w-4 text-white" />
                 {/if}
             </button>

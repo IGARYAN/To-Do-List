@@ -11,18 +11,13 @@
     import { toastStore } from "$lib/stores/toast-store";
     import ColorPicker from "$lib/components/color-picker.svelte";
     import type { TypesTask } from "$lib/types/types-task";
-    import {
-        tasks,
-        selectedColor,
-        isEditTaskModalOpen,
-        taskCreateEditDelete,
-    } from "$lib/stores/app-state";
+    import { taskStore } from "$lib/stores/task-store.svelte";
+    import { appStateStore } from "$lib/stores/app-state.svelte";
     import {
         DateFormatter,
         getLocalTimeZone,
         CalendarDate,
     } from "@internationalized/date";
-    import { get } from "svelte/store";
 
     let isPopoverOpen = $state(false);
 
@@ -37,11 +32,15 @@
         year: "numeric",
     });
 
+    // function cancelDialog() {
+    //     appStateStore.selectedColor = undefined;
+    //     appStateStore.taskCreateEditDelete = null;
+    //     resetForm();
+    //     appStateStore.isEditTaskModalOpen = false;
+    // }
     function cancelDialog() {
-        selectedColor.set(undefined);
-        taskCreateEditDelete.set(null);
         resetForm();
-        isEditTaskModalOpen.set(false);
+        appStateStore.closeEditTaskModal();
     }
 
     function resetForm() {
@@ -89,7 +88,7 @@
     async function saveTask() {
         if (!validate()) return;
 
-        const task = get(taskCreateEditDelete);
+        const task = appStateStore.taskCreateEditDelete;
         if (!task) return;
 
         try {
@@ -97,17 +96,16 @@
                 id: task.id, // сохраняем тот же id
                 title: title.trim(),
                 description: description.trim() || undefined,
-                color: $selectedColor,
+                color: appStateStore.selectedColor,
                 date: value!.toDate(getLocalTimeZone()).toISOString(),
                 completed: false,
             };
 
-            tasks.update((currentTasks) =>
-                currentTasks.map((t) => (t.id === task.id ? updatedTask : t)),
-            );
+            // Используем метод updateTask из стора
+            taskStore.updateTask(task.id, updatedTask);
 
             toastStore.add({
-                title: "Измеение задачи",
+                title: "Изменение задачи",
                 description: `Задача "${updatedTask.title}" успешно изменена!`,
                 variant: "default",
             });
@@ -143,11 +141,15 @@
     }
 
     $effect(() => {
-        if ($isEditTaskModalOpen && $taskCreateEditDelete) {
-            title = $taskCreateEditDelete.title;
-            description = $taskCreateEditDelete.description || "";
-            $selectedColor = $taskCreateEditDelete.color;
-            const taskDate = new Date($taskCreateEditDelete.date);
+        if (
+            appStateStore.isEditTaskModalOpen &&
+            appStateStore.taskCreateEditDelete
+        ) {
+            title = appStateStore.taskCreateEditDelete.title;
+            description = appStateStore.taskCreateEditDelete.description || "";
+            appStateStore.selectedColor =
+                appStateStore.taskCreateEditDelete.color;
+            const taskDate = new Date(appStateStore.taskCreateEditDelete.date);
             value = new CalendarDate(
                 taskDate.getFullYear(),
                 taskDate.getMonth() + 1,
@@ -165,7 +167,7 @@
 </script>
 
 <Dialog.Root
-    bind:open={$isEditTaskModalOpen}
+    bind:open={appStateStore.isEditTaskModalOpen}
     onOpenChange={(open) => {
         if (!open) cancelDialog();
     }}

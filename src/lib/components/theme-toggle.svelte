@@ -4,26 +4,60 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { themeStore } from "$lib/stores/theme-store";
-  import { settings } from "$lib/stores/app-state";
-  import { onDestroy } from "svelte";
+  import { settingsStore } from "$lib/stores/settings-store.svelte";
+
+  type Theme = "light" | "dark" | "system";
 
   // Внутреннее состояние для RadioGroup
-  let selected: "light" | "dark" | "system" = "system";
+  let selected: Theme = $state("system");
 
-  // Подписка на внешнюю тему
-  const unsubscribe = themeStore.subscribe((theme) => {
-    selected = theme;
+  // Последнее значение темы, полученное ИМЕННО из settingsStore.
+  // Это обычная переменная (не реактивная), чтобы:
+  // 1) не добавлять лишние зависимости в $effect,
+  // 2) не перезаписывать выбор пользователя до применения в store.
+  let lastThemeFromSettings: Theme | null = null;
+
+  // Синхронизируем local state <- settingsStore.
+  // КРИТИЧНО: этот эффект НЕ должен зависеть от `selected`,
+  // иначе при выборе пункта в меню значение может откатиться назад
+  // до того, как успеет выполниться применение темы.
+  $effect(() => {
+    const themeFromSettings = settingsStore.settings.theme as Theme;
+
+    if (themeFromSettings !== lastThemeFromSettings) {
+      console.log("[ThemeToggle] [SyncFromSettings] Обновляем selected из settingsStore", {
+        previousThemeFromSettings: lastThemeFromSettings,
+        nextThemeFromSettings: themeFromSettings,
+      });
+
+      lastThemeFromSettings = themeFromSettings;
+      selected = themeFromSettings;
+    }
   });
 
-  onDestroy(() => {
-    unsubscribe();
-  });
+  // Синхронизируем settingsStore/themeStore <- local state.
+  // Защита от цикла:
+  // - если selected уже равен settingsStore.settings.theme, ничего не делаем;
+  // - запись в settingsStore выполняется только внутри themeStore.set().
+  $effect(() => {
+    const themeFromSettings = settingsStore.settings.theme as Theme;
 
-  // Отслеживаем выбор и обновляем тему
-  $: {
+    if (selected === themeFromSettings) {
+      console.log("[ThemeToggle] [ApplyTheme] Пропуск: selected уже синхронизирован", {
+        selected,
+      });
+      return;
+    }
+
+    console.log("[ThemeToggle] [ApplyTheme] Применяем новую тему", {
+      previousTheme: themeFromSettings,
+      nextTheme: selected,
+    });
+
+    // themeStore.set() сам обновляет settingsStore,
+    // поэтому дублирующий settingsStore.set() здесь не нужен.
     themeStore.set(selected);
-    settings.update(s => ({...s, theme: selected}));
-  }
+  });
 </script>
 
 <Tooltip.Provider delayDuration={1000}>

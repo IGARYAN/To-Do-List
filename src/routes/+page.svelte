@@ -7,19 +7,15 @@
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
   import EditTaskModal from "$lib/components/edit-task-modal.svelte";
+  import AutostartToggle from "$lib/components/autostart-toggle.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { onMount } from "svelte"; // Хук жизненного цикла
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import {
-    tasks,
-    settings,
-    currentTime,
-    isEditTaskModalOpen,
-    isCreateTaskModalOpen,
-    isDeleteConfirmDialogOpen,
-  } from "$lib/stores/app-state";
+  import { taskStore } from "$lib/stores/task-store.svelte";
+  import { settingsStore } from "$lib/stores/settings-store.svelte";
+  import { appStateStore } from "$lib/stores/app-state.svelte";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
   import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
   import {
@@ -38,16 +34,9 @@
   /*
       Подписка на изменения в хранилищах при монтировании компонента
       - Добавляем класс 'loaded' для плавного появления интерфейса
-      - Подписываемся на изменения задач и настроек
     */
   onMount(() => {
     document.documentElement.classList.add("loaded");
-
-    // Подписка на изменения настроек для обновления состояния окна
-    const unsubscribeSettings = settings.subscribe(async (value) => {
-      const win = await getCurrentWindow();
-      await win.setAlwaysOnTop(value.alwaysOnTop);
-    });
 
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -56,14 +45,18 @@
     setupMidnightTimer();
 
     return () => {
-      // Отписка при размонтировании
-      unsubscribeSettings();
       if (midnightTimerId) {
         // Очистка
         clearTimeout(midnightTimerId);
       }
       window.removeEventListener("resize", handleResize);
     };
+  });
+
+  // $effect для обновления alwaysOnTop при изменении настроек
+  $effect(() => {
+    const win = getCurrentWindow();
+    win.setAlwaysOnTop(settingsStore.settings.alwaysOnTop);
   });
 
   // Функция расчёта миллисекунд до следующей полуночи
@@ -89,7 +82,7 @@
     }
 
     const updateTimeAndReschedule = () => {
-      $currentTime = new Date(); // Обновляем время
+      appStateStore.updateTime(); // Обновляем время через стор
       setupMidnightTimer(); // Регистрируем следующий таймер
     };
 
@@ -103,25 +96,30 @@
       Удаляет задачи, выполненные более autoDeleteDays дней назад
     */
   $effect(() => {
-    if ($tasks.length === 0) return;
-    const now = new Date($currentTime);
+    const tasks = taskStore.tasks;
+    const currentTime = appStateStore.currentTime;
+    const autoDeleteDays = settingsStore.settings.autoDeleteDays;
+
+    if (tasks.length === 0) return;
+    const now = new Date(currentTime);
     now.setHours(0, 0, 0, 0); // сравнение по дате, не по времени
-    const updatedTasks = $tasks.filter((task) => {
+
+    const updatedTasks = tasks.filter((task) => {
       if (task.completed && task.completedAt) {
         const completedDate = new Date(task.completedAt);
         completedDate.setHours(0, 0, 0, 0);
         const daysDiff = Math.floor(
           (now.getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24),
         );
-        return daysDiff < $settings.autoDeleteDays;
+        return daysDiff < autoDeleteDays;
       }
       return true;
     });
 
     // Если задачи были удалены - показываем уведомление
-    if (updatedTasks.length !== $tasks.length) {
-      const deletedCount = $tasks.length - updatedTasks.length;
-      $tasks = updatedTasks;
+    if (updatedTasks.length !== tasks.length) {
+      const deletedCount = tasks.length - updatedTasks.length;
+      taskStore.tasks = updatedTasks;
       toastStore.add({
         title: "Авто удаление задач",
         description: `Удален${deletedCount === 1 ? "а" : "о"} ${deletedCount} выполнен${deletedCount === 1 ? "ная задача" : "ных задач"}`,
@@ -137,14 +135,14 @@
 
   // Текущая дата (нормализованная)
   const today = $derived.by(() => {
-    const date = new Date($currentTime);
+    const date = new Date(appStateStore.currentTime);
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
   // Выполненные задачи
   const completedTasks = $derived(
-    $tasks
+    taskStore.tasks
       .filter((task) => task.completed)
       .sort(
         (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
@@ -153,7 +151,7 @@
 
   // Просроченные задачи (отсортированные от старых к новым)
   const overdueTasks = $derived(
-    $tasks
+    taskStore.tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -165,7 +163,7 @@
 
   // Задачи на сегодня (отсортированные по времени)
   const todayTasks = $derived(
-    $tasks
+    taskStore.tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -177,7 +175,7 @@
 
   // Будущие задачи (в пределах futureDays дней, отсортированные)
   const futureTasks = $derived(
-    $tasks
+    taskStore.tasks
       .filter((task) => {
         if (task.completed) return false;
         const taskDate = new Date(task.date);
@@ -185,7 +183,7 @@
         const daysDiff = Math.floor(
           (taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
-        return daysDiff > 0 && daysDiff <= $settings.futureDays;
+        return daysDiff > 0 && daysDiff <= settingsStore.settings.futureDays;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
   );
@@ -218,7 +216,7 @@
           <Tooltip.Root>
             <Tooltip.Trigger
               onclick={() => {
-                isCreateTaskModalOpen.set(true);
+                appStateStore.openCreateTaskModal();
               }}
               class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
             >
@@ -234,6 +232,7 @@
         <!-- <CreateTaskModal /> -->
         <ThemeToggle />
         <AlwaysOnTop />
+        <AutostartToggle />
         <SettingsModal />
       </div>
     </div>
@@ -333,14 +332,14 @@
   </div>
 </div>
 
-{#if $isEditTaskModalOpen}
+{#if appStateStore.isEditTaskModalOpen}
   <EditTaskModal />
 {/if}
 
-{#if $isCreateTaskModalOpen}
+{#if appStateStore.isCreateTaskModalOpen}
   <CreateTaskModal />
 {/if}
 
-{#if $isDeleteConfirmDialogOpen}
+{#if appStateStore.isDeleteConfirmDialogOpen}
   <DeleteConfirmDialog />
 {/if}

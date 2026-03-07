@@ -2,20 +2,20 @@
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { buttonVariants } from "$lib/components/ui/button";
     import { Pin, PinOff } from "@lucide/svelte";
-    import { settings } from "$lib/stores/app-state";
+    import { settingsStore } from "$lib/stores/settings-store.svelte";
     import { toastStore } from "$lib/stores/toast-store";
     import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
     $effect(() => {
         (async () => {
             const win = await getCurrentWindow();
-            await win.setAlwaysOnTop($settings.alwaysOnTop);
+            await win.setAlwaysOnTop(settingsStore.settings.alwaysOnTop);
         })();
     });
 
     async function toggleAlwaysOnTop() {
-        const newState = !$settings.alwaysOnTop;
-        settings.update(s => ({...s, alwaysOnTop: newState}));
+        const newState = !settingsStore.settings.alwaysOnTop;
+        settingsStore.set("alwaysOnTop", newState);
 
         toastStore.add({
             title: newState
@@ -34,12 +34,12 @@
         <Tooltip.Trigger
             onclick={toggleAlwaysOnTop}
             class={`transition-all duration-300 ${
-                $settings.alwaysOnTop
+                settingsStore.settings.alwaysOnTop
                     ? buttonVariants({ variant: "default", size: "icon" })
                     : buttonVariants({ variant: "outline", size: "icon" })
             }`}
         >
-            {#if $settings.alwaysOnTop}
+            {#if settingsStore.settings.alwaysOnTop}
                 <Pin class="h-4 w-4" />
             {:else}
                 <PinOff class="h-4 w-4" />

@@ -5,9 +5,10 @@
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import type { TypesTask } from "$lib/types/types-task"; // Тип задачи
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
-  import { ColorMap } from '$lib/types/color-map';
+  import { ColorMap } from "$lib/types/color-map";
+  import { taskStore } from "$lib/stores/task-store.svelte";
+  import { appStateStore } from "$lib/stores/app-state.svelte";
   import {
     Plus,
     Circle,
@@ -17,14 +18,6 @@
     CircleCheckBig,
     EllipsisVertical,
   } from "@lucide/svelte"; // Иконки
-  import {
-    tasks,
-    currentTime,
-    isEditTaskModalOpen,
-    taskCreateEditDelete,
-    isCreateTaskModalOpen,
-    isDeleteConfirmDialogOpen,
-  } from "$lib/stores/app-state";
 
   let { task } = $props();
 
@@ -35,30 +28,20 @@
     - Показывает соответствующее уведомление
   */
   function toggleTask(id: string) {
-    let updatedTask: TypesTask | undefined;
+    // Находим задачу для уведомления
+    const currentTask = taskStore.tasks.find((t) => t.id === id);
+    if (!currentTask) return;
 
-    $tasks = $tasks.map((task) => {
-      if (task.id === id) {
-        const isNowCompleted = !task.completed;
-        updatedTask = {
-          ...task,
-          completed: isNowCompleted,
-          completedAt: isNowCompleted ? new Date().toISOString() : undefined,
-        };
-        return updatedTask;
-      }
-      return task;
+    const isNowCompleted = !currentTask.completed;
+
+    // Используем метод toggleTask из стора
+    taskStore.toggleTask(id);
+
+    toastStore.add({
+      title: isNowCompleted ? "Задача выполнена" : "Задача не выполнена",
+      description: `Задача "${currentTask.title}" ${isNowCompleted ? "отмечена как выполненная." : "отмечена как невыполненная."}`,
+      variant: "default",
     });
-
-    if (updatedTask) {
-      toastStore.add({
-        title: updatedTask.completed
-          ? "Задача выполнена"
-          : "Задача не выполнена",
-        description: `Задача "${updatedTask.title}" ${updatedTask.completed ? "отмечена как выполненная." : "отмечена как невыполненная."}`,
-        variant: "default",
-      });
-    }
   }
 
   /*
@@ -76,14 +59,14 @@
 
   // Сегодняшняя дата
   const today = $derived.by(() => {
-    const date = new Date($currentTime);
+    const date = new Date(appStateStore.currentTime);
     date.setHours(0, 0, 0, 0);
     return date;
   });
 
   // Завтрашняя дата
   const tomorrow = $derived.by(() => {
-    const date = new Date($currentTime);
+    const date = new Date(appStateStore.currentTime);
     date.setDate(date.getDate() + 1);
     date.setHours(0, 0, 0, 0);
     return date;
@@ -101,20 +84,21 @@
 
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
-    taskCreateEditDelete.set(task);
-    isEditTaskModalOpen.set(true);
+    appStateStore.openEditTaskModal(task);
   }
 
   // Функция открывает диалог создания задачи из существующей задачи
+  // function CreateTaskModalOpen() {
+  //   appStateStore.taskCreateEditDelete = task;
+  //   appStateStore.isCreateTaskModalOpen = true;
+  // }
   function CreateTaskModalOpen() {
-    taskCreateEditDelete.set(task);
-    isCreateTaskModalOpen.set(true);
-  }
+    appStateStore.openCreateTaskFromExisting(task);
+}
 
   // Функция открывает диалог подтверждения удаления задачи
   function DeleteConfirmDialogOpen() {
-    taskCreateEditDelete.set(task);
-    isDeleteConfirmDialogOpen.set(true);
+    appStateStore.openDeleteConfirmDialog(task);
   }
 </script>
 
@@ -201,7 +185,7 @@
       </div>
     </div>
 
-    <!-- Кнопки действий (показываются при наведении) -->
+    <!-- Кнопки действий -->
     <div class="flex items-center gap-1 transition-opacity duration-300">
       <DropdownMenu.Root>
         <DropdownMenu.Trigger

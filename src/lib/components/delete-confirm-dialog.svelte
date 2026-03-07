@@ -2,20 +2,16 @@
   import { AlertTriangle } from "@lucide/svelte";
   import { buttonVariants } from "$lib/components/ui/button";
   import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
-  import {
-    tasks,
-    taskCreateEditDelete,
-    isDeleteConfirmDialogOpen,
-  } from "$lib/stores/app-state";
+  import { taskStore } from "$lib/stores/task-store.svelte";
+  import { appStateStore } from "$lib/stores/app-state.svelte";
   import { toastStore } from "$lib/stores/toast-store";
-  import { get } from "svelte/store";
 
   function deleteTask() {
-    const task = get(taskCreateEditDelete);
+    const task = appStateStore.taskCreateEditDelete;
     if (!task) return;
 
-    const currentTasks = get(tasks);
-    tasks.set(currentTasks.filter((t) => t.id !== task.id));
+    // Используем метод deleteTask из стора
+    taskStore.deleteTask(task.id);
 
     toastStore.add({
       title: "Удаление задачи",
@@ -27,14 +23,13 @@
   }
 
   function cancelDialog() {
-    taskCreateEditDelete.set(null);
-    isDeleteConfirmDialogOpen.set(false);
+    appStateStore.closeDeleteConfirmDialog();
   }
 </script>
 
-{#if $taskCreateEditDelete}
+{#if appStateStore.taskCreateEditDelete}
   <AlertDialog.Root
-    bind:open={$isDeleteConfirmDialogOpen}
+    bind:open={appStateStore.isDeleteConfirmDialogOpen}
     onOpenChange={(open) => {
       if (!open) cancelDialog();
     }}
@@ -50,7 +45,7 @@
       <div class="py-0">
         <AlertDialog.Description class="text-md">
           Вы уверены, что хотите удалить задачу <span class="font-semibold"
-            >"{$taskCreateEditDelete.title}"</span
+            >"{appStateStore.taskCreateEditDelete.title}"</span
           >?
           <br />
           <span class="text-red-500">Это действие нельзя отменить.</span>

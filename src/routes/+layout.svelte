@@ -1,62 +1,157 @@
 <script lang="ts">
   import "../app.css";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { onMount } from "svelte";
-  import { themeStore } from "$lib/stores/theme-store"; // импорт темы
+  import { onMount, onDestroy } from "svelte";
+  import { themeStore } from "$lib/stores/theme-store";
   import Toaster from "$lib/components/toaster.svelte";
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
-  import { loadSettings } from "$lib/stores/settings-store";
-  import { loadTask } from "$lib/stores/task-store";
+  import { settingsStore } from "$lib/stores/settings-store.svelte";
+  import { taskStore } from "$lib/stores/task-store.svelte";
+  import { appStateStore } from "$lib/stores/app-state.svelte";
   import { goto } from "$app/navigation";
 
-  onMount(async () => {
-    console.log("Загружаем настройки...");
-    await loadSettings(); // загружаем и применяем в store
+  // Блокируем системное контекстное меню
+  window.addEventListener("contextmenu", (e) => e.preventDefault());
 
-    console.log("Загружаем задачи...");
-    const result = await loadTask(); // загружаем задачи
+  // $effect для автосохранения настроек при изменении
+  // Это работает только внутри компонента Svelte, а не внутри класса
+  $effect(() => {
+    const currentSettingsStr = JSON.stringify(settingsStore.settings);
 
-    console.log("Восстанавливаем состояние окна...");
-    await restoreWindow(); // Восстанавливаем состояние окна
+    // Проверяем, изменились ли настройки
+    if (settingsStore._lastSavedSettings !== currentSettingsStr) {
+      settingsStore._lastSavedSettings = currentSettingsStr;
 
-    console.log("Инициализируем обработчик закрытия...");
-    await initWindow(); // подписка на событие close-requested
-
-    await themeStore.init(); // подписка на тему (она сама применит её к <html>)
-
-    if (!result) {
-      goto("/pass"); // Переход на ввод Pass
-    }
-
-    // Ждем полной загрузки DOM
-    await new Promise<void>((resolve) => {
-      if (document.readyState === "complete") {
-        resolve();
-      } else {
-        const handler = () => {
-          setTimeout(resolve, 200);
-        };
-        window.addEventListener("load", handler, { once: true });
+      // Сохраняем только если инициализация завершена
+      if (settingsStore.isInitialized) {
+        console.log("[Layout] Настройки изменились, сохраняем...");
+        settingsStore.saveSettings();
       }
+    }
+  });
+
+  // $effect для автосохранения задач при изменении
+  // Вынесен из TaskStore, чтобы избежать ошибки Svelte effect_orphan.
+  $effect(() => {
+    const currentTasksStr = JSON.stringify(taskStore.tasks);
+
+    // Подробный лог состояния для отладки реактивности
+    console.log("[Layout] [TaskAutoSave] Проверка изменений задач", {
+      isInitialized: taskStore.isInitialized,
+      hasChanges: taskStore._lastSavedTasks !== currentTasksStr,
+      tasksCount: taskStore.tasks.length,
     });
 
-    // Показываем окно
+    // Проверяем, изменились ли задачи
+    if (taskStore._lastSavedTasks !== currentTasksStr) {
+      taskStore._lastSavedTasks = currentTasksStr;
+
+      // Сохраняем только после завершения начальной инициализации
+      if (taskStore.isInitialized) {
+        console.log("[Layout] [TaskAutoSave] Задачи изменились, сохраняем...");
+        taskStore.saveTask();
+      } else {
+        console.log(
+          "[Layout] [TaskAutoSave] Инициализация не завершена, сохранять пока рано",
+        );
+      }
+    }
+  });
+
+  // Локальная переменная для отслеживания последнего значения пароля
+  // Нужна, чтобы корректно определять именно изменение пароля.
+  let lastKnownPass: string | null = null;
+
+  // $effect для автосохранения при изменении пароля
+  // Повторяет старое поведение: сохраняем только если пароль не null.
+  $effect(() => {
+    const currentPass = taskStore.currentPass;
+
+    // На этапе до инициализации просто синхронизируем baseline
+    if (!taskStore.isInitialized) {
+      lastKnownPass = currentPass;
+      console.log(
+        "[Layout] [TaskPasswordEffect] Инициализация еще не завершена",
+        {
+          currentPassIsSet: currentPass !== null,
+        },
+      );
+      return;
+    }
+
+    // Детект изменения пароля
+    if (lastKnownPass !== currentPass) {
+      console.log("[Layout] [TaskPasswordEffect] Обнаружено изменение пароля", {
+        previousPassWasSet: lastKnownPass !== null,
+        currentPassIsSet: currentPass !== null,
+      });
+
+      lastKnownPass = currentPass;
+
+      if (currentPass !== null) {
+        console.log(
+          "[Layout] [TaskPasswordEffect] Пароль изменен, пересохраняем задачи...",
+        );
+        taskStore.saveTask();
+      } else {
+        console.log(
+          "[Layout] [TaskPasswordEffect] Пароль сброшен в null, пересохранение по старой логике не выполняется",
+        );
+      }
+    }
+  });
+
+  onMount(async () => {
     try {
+      console.log("[Layout] Загружаем настройки...");
+      await settingsStore.loadSettings();
+
+      console.log("[Layout] Инициализируем тему...");
+      themeStore.init(); // не async, await не нужен
+
+      console.log("[Layout] Загружаем задачи...");
+      const result = await taskStore.loadTask();
+
+      console.log("[Layout] Восстанавливаем состояние окна...");
+      await restoreWindow();
+
+      console.log("[Layout] Инициализируем обработчик закрытия...");
+      await initWindow();
+
+      // Запускаем обновление времени
+      appStateStore.startTimeUpdater();
+
+      // Показываем окно ДО навигации
       const win = await getCurrentWindow();
       const isVisible = await win.isVisible();
       if (!isVisible) {
         await win.show();
         await win.setFocus();
-        console.log("✅ Окно показано и в фокусе");
+        console.log("[Layout] ✅ Окно показано и в фокусе");
       } else {
-        console.log("ℹ️ Окно уже видимо");
+        console.log("[Layout] ℹ️ Окно уже видимо");
+      }
+
+      // Навигация после показа окна
+      if (!result) {
+        console.log("[Layout] Переход на /pass");
+        goto("/pass");
       }
     } catch (err) {
-      console.error("❌ Ошибка при показе окна:", err);
+      console.error("[Layout] ❌ Ошибка инициализации:", err);
     }
   });
+
+  onDestroy(() => {
+    appStateStore.stopTimeUpdater();
+  });
+
+  // Svelte 5: вместо <slot /> используем snippet children через {@render ...}
+  // Добавляем лог для удобства отладки в DEV-режиме.
+  let { children } = $props();
+  console.log("[Layout] Инициализирован snippet children:", !!children);
 </script>
 
-<slot />
+{@render children?.()}
 
 <Toaster />
