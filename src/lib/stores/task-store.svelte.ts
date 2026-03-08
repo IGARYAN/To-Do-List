@@ -61,7 +61,6 @@ class TaskStore {
 
                 if (!this.currentPass) {
                     console.warn("[TaskStore] ⚠️ Пароль не установлен. Невозможно расшифровать задачи.");
-                    this.isInitialized = true;
                     return false;
                 }
 
@@ -75,7 +74,6 @@ class TaskStore {
                     return true;
                 } else {
                     console.warn("[TaskStore] ⚠️ Ошибка расшифровки задач. Возможно, пароль неверный.");
-                    this.isInitialized = true;
                     return false;
                 }
             } else {

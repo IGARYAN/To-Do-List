@@ -107,12 +107,6 @@ class AppStateStore {
     /**
      * Запустить таймер обновления времени (каждую минуту)
      */
-    // startTimeUpdater(): void {
-    //     // Обновляем каждую минуту
-    //     setInterval(() => {
-    //         this.updateTime();
-    //     }, 60000);
-    // }
     startTimeUpdater(): void {
         if (this._timeInterval) clearInterval(this._timeInterval);
         this._timeInterval = setInterval(() => {
@@ -136,6 +130,21 @@ class AppStateStore {
         this.isDeleteConfirmDialogOpen = false;
         this.taskCreateEditDelete = null;
         this.selectedColor = undefined;
+    }
+
+    // Гетер - Сегодняшняя дата
+    get today(): Date {
+        const date = new Date(this.currentTime);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+
+    // Гетер - Завтрашняя дата
+    get tomorrow(): Date {
+        const date = new Date(this.currentTime);
+        date.setDate(date.getDate() + 1);
+        date.setHours(0, 0, 0, 0);
+        return date;
     }
 }
 

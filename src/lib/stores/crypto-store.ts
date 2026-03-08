@@ -9,10 +9,10 @@
 export async function encryptData(data: any, userPin: string): Promise<{ cipher: string, iv: string, salt: string }> {
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
-    
+
     const key = await getKey(userPin, salt.buffer as ArrayBuffer);
     const encodedData = new TextEncoder().encode(JSON.stringify(data));
-    
+
     const cipherBuffer = await window.crypto.subtle.encrypt(
         { name: "AES-GCM", iv },
         key,
@@ -38,9 +38,9 @@ export async function decryptData(cipher: string, userPin: string, iv: string, s
     try {
         const saltBuffer = base64ToBuffer(salt);
         const ivBuffer = base64ToBuffer(iv);
-        
+
         const key = await getKey(userPin, saltBuffer);
-        
+
         const decryptedBuffer = await window.crypto.subtle.decrypt(
             { name: "AES-GCM", iv: new Uint8Array(ivBuffer) },
             key,
@@ -63,7 +63,7 @@ export async function decryptData(cipher: string, userPin: string, iv: string, s
  */
 async function getKey(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
     const encoder = new TextEncoder();
-    
+
     const keyMaterial = await window.crypto.subtle.importKey(
         "raw",
         encoder.encode(password),

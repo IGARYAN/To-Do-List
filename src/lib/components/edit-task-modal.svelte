@@ -32,12 +32,6 @@
         year: "numeric",
     });
 
-    // function cancelDialog() {
-    //     appStateStore.selectedColor = undefined;
-    //     appStateStore.taskCreateEditDelete = null;
-    //     resetForm();
-    //     appStateStore.isEditTaskModalOpen = false;
-    // }
     function cancelDialog() {
         resetForm();
         appStateStore.closeEditTaskModal();

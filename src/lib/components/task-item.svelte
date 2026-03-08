@@ -51,23 +51,8 @@
   */
 
   // Дата выполнения задачи
-  const taskDate = $derived.by(() => {
+  const taskDate = $derived(() => {
     const date = new Date(task.date);
-    date.setHours(0, 0, 0, 0);
-    return date;
-  });
-
-  // Сегодняшняя дата
-  const today = $derived.by(() => {
-    const date = new Date(appStateStore.currentTime);
-    date.setHours(0, 0, 0, 0);
-    return date;
-  });
-
-  // Завтрашняя дата
-  const tomorrow = $derived.by(() => {
-    const date = new Date(appStateStore.currentTime);
-    date.setDate(date.getDate() + 1);
     date.setHours(0, 0, 0, 0);
     return date;
   });
@@ -77,10 +62,14 @@
     Используются для отображения соответствующих бейджей
   */
   const isOverdue = $derived(
-    taskDate.getTime() < today.getTime() && !task.completed,
+    taskDate().getTime() < appStateStore.today.getTime() && !task.completed,
   );
-  const isToday = $derived(taskDate.getTime() === today.getTime());
-  const isTomorrow = $derived(taskDate.getTime() === tomorrow.getTime());
+  const isToday = $derived(
+    taskDate().getTime() === appStateStore.today.getTime(),
+  );
+  const isTomorrow = $derived(
+    taskDate().getTime() === appStateStore.tomorrow.getTime(),
+  );
 
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
@@ -88,13 +77,9 @@
   }
 
   // Функция открывает диалог создания задачи из существующей задачи
-  // function CreateTaskModalOpen() {
-  //   appStateStore.taskCreateEditDelete = task;
-  //   appStateStore.isCreateTaskModalOpen = true;
-  // }
   function CreateTaskModalOpen() {
     appStateStore.openCreateTaskFromExisting(task);
-}
+  }
 
   // Функция открывает диалог подтверждения удаления задачи
   function DeleteConfirmDialogOpen() {
@@ -158,7 +143,7 @@
       <div class="flex items-center gap-2 pt-2">
         <div class="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar class="h-3 w-3" />
-          {format(taskDate, "d MMMM yyyy", { locale: ru })}
+          {format(taskDate(), "d MMMM yyyy", { locale: ru })}
         </div>
 
         <!-- Бейдж "Сегодня" -->
