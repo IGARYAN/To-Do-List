@@ -27,6 +27,8 @@
     CircleCheckBig,
   } from "@lucide/svelte"; // Иконки
 
+  let showAllFuture = $state(false);
+
   let isSingleColumn = $state(false);
 
   let midnightTimerId: NodeJS.Timeout | null = null;
@@ -183,10 +185,26 @@
         const daysDiff = Math.floor(
           (taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
-        return daysDiff > 0 && daysDiff <= settingsStore.settings.futureDays;
+        // Если showAllFuture — показываем все будущие, иначе только в пределах futureDays
+        return showAllFuture
+          ? daysDiff > 0
+          : daysDiff > 0 && daysDiff <= settingsStore.settings.futureDays;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
   );
+  // const futureTasks = $derived(
+  //   taskStore.tasks
+  //     .filter((task) => {
+  //       if (task.completed) return false;
+  //       const taskDate = new Date(task.date);
+  //       taskDate.setHours(0, 0, 0, 0);
+  //       const daysDiff = Math.floor(
+  //         (taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  //       );
+  //       return daysDiff > 0 && daysDiff <= settingsStore.settings.futureDays;
+  //     })
+  //     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+  // );
 
   // Слежение за размером окна
   function handleResize() {
@@ -253,7 +271,7 @@
           <Card.Header>
             <Card.Title class="flex items-center gap-2">
               <Clock class="h-5 w-5 text-orange-500" />
-              Ближайшие задачи
+              Будущие задачи
               <Badge variant="secondary">{futureTasks.length}</Badge>
               {#if isSingleColumn}
                 <ArrowDown class="h-5 w-5" />
@@ -261,6 +279,16 @@
                 <ArrowRight class="h-5 w-5" />
               {/if}
             </Card.Title>
+            <Card.Action>
+              <button
+                onclick={() => (showAllFuture = !showAllFuture)}
+                class={`w-20 ${buttonVariants({ variant: showAllFuture ? "default" : "outline", size: "sm" })}`}
+              >
+                {showAllFuture
+                  ? "Все"
+                  : `${settingsStore.settings.futureDays} дн.`}
+              </button>
+            </Card.Action>
           </Card.Header>
           <Card.Content class="px-4">
             <div class="space-y-2">

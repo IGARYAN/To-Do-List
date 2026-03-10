@@ -17,31 +17,37 @@ const TASKS_FILE = "tasks.json";
 class TaskStore {
     // Реактивное состояние задач
     tasks = $state<TypesTask[]>([]);
-    
+
     // Текущий пароль для шифрования
     currentPass = $state<string | null>(null);
-    
+
     // Флаг инициализации - чтобы не сохранять при начальной загрузке
     // Важно: поле используется в компонентных $effect (вынесено из конструктора)
     isInitialized = $state(false);
-    
+
     // Приватный флаг для отслеживания изменений
     // Важно: поле используется в компонентных $effect (вынесено из конструктора)
     _lastSavedTasks = $state<string>("");
 
+    // Закэшированный путь к файлу
+    private _filePath: string | null = null;
+
     constructor() {
         // В Svelte 5 нельзя вызывать $effect внутри произвольного класса
-        // (иначе получим runtime-ошибку effect_orphan).
         // Поэтому автосохранение перенесено в компонент src/routes/+layout.svelte.
         console.log("[TaskStore] Экземпляр store создан. Эффекты автосохранения инициализируются в layout.");
     }
 
     /**
-     * Получить путь к файлу задач
+     * Получить путь к файлу задач и закэшировать
      */
     private async getFilePath(): Promise<string> {
-        const dir = await resourceDir();
-        return await join(dir, TASKS_FILE);
+        if (!this._filePath) {
+            const dir = await resourceDir();
+            this._filePath = await join(dir, TASKS_FILE);
+            console.log(`[TaskStore] Путь к файлу закэширован: ${this._filePath}`);
+        }
+        return this._filePath;
     }
 
     /**
@@ -134,7 +140,7 @@ class TaskStore {
      * Обновить задачу
      */
     updateTask(id: string, updates: Partial<TypesTask>): void {
-        this.tasks = this.tasks.map(task => 
+        this.tasks = this.tasks.map(task =>
             task.id === id ? { ...task, ...updates } : task
         );
     }

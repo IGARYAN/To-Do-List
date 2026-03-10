@@ -1,13 +1,13 @@
 <script lang="ts">
   import "../app.css";
+  import "$lib/utils/logger";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import { themeStore } from "$lib/stores/theme-store";
   import Toaster from "$lib/components/toaster.svelte";
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
   import { settingsStore } from "$lib/stores/settings-store.svelte";
   import { taskStore } from "$lib/stores/task-store.svelte";
-  import { appStateStore } from "$lib/stores/app-state.svelte";
   import { goto } from "$app/navigation";
 
   // Блокируем системное контекстное меню
@@ -118,9 +118,6 @@
       console.log("[Layout] Инициализируем обработчик закрытия...");
       await initWindow();
 
-      // Запускаем обновление времени
-      appStateStore.startTimeUpdater();
-
       // Показываем окно ДО навигации
       const win = await getCurrentWindow();
       const isVisible = await win.isVisible();
@@ -140,10 +137,6 @@
     } catch (err) {
       console.error("[Layout] ❌ Ошибка инициализации:", err);
     }
-  });
-
-  onDestroy(() => {
-    appStateStore.stopTimeUpdater();
   });
 
   // Svelte 5: вместо <slot /> используем snippet children через {@render ...}

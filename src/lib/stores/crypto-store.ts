@@ -76,7 +76,7 @@ async function getKey(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
         {
             name: "PBKDF2",
             salt: salt,
-            iterations: 100000,
+            iterations: 50000,
             hash: "SHA-256",
         },
         keyMaterial,

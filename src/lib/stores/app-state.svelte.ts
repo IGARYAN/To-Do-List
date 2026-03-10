@@ -101,26 +101,6 @@ class AppStateStore {
         this.currentTime = new Date();
     }
 
-
-    private _timeInterval: ReturnType<typeof setInterval> | null = null;
-
-    /**
-     * Запустить таймер обновления времени (каждую минуту)
-     */
-    startTimeUpdater(): void {
-        if (this._timeInterval) clearInterval(this._timeInterval);
-        this._timeInterval = setInterval(() => {
-            this.updateTime();
-        }, 60000);
-    }
-
-    stopTimeUpdater(): void {
-        if (this._timeInterval) {
-            clearInterval(this._timeInterval);
-            this._timeInterval = null;
-        }
-    }
-
     /**
      * Закрыть все модальные окна и диалоги
      */

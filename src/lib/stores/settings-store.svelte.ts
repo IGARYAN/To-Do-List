@@ -26,12 +26,15 @@ const DEFAULT_SETTINGS: TypesSettings = {
 class SettingsStore {
     // Реактивное состояние настроек
     settings = $state<TypesSettings>({ ...DEFAULT_SETTINGS });
-    
+
     // Флаг инициализации - чтобы не сохранять при начальной загрузке
     isInitialized = $state(false);
-    
+
     // Приватный флаг для отслеживания изменений
     _lastSavedSettings = $state<string>("");
+
+    // Закэшированный путь к файлу
+    private _filePath: string | null = null;
 
     constructor() {
         // Конструктор теперь пустой - эффекты перенесены в компонент +layout.svelte
@@ -42,8 +45,12 @@ class SettingsStore {
      * Получить путь к файлу настроек
      */
     private async getFilePath(): Promise<string> {
-        const dir = await resourceDir();
-        return await join(dir, SETTINGS_FILE);
+        if (!this._filePath) {
+            const dir = await resourceDir();
+            this._filePath = await join(dir, SETTINGS_FILE);
+            console.log(`[SettingsStore] Путь к файлу закэширован: ${this._filePath}`);
+        }
+        return this._filePath;
     }
 
     /**
@@ -53,7 +60,7 @@ class SettingsStore {
         try {
             const path = await this.getFilePath();
             console.log(`[SettingsStore] Загрузка настроек из: ${path}`);
-            
+
             const content = await readTextFile(path);
             const fileSettings = JSON.parse(content) as TypesSettings;
 
@@ -62,7 +69,7 @@ class SettingsStore {
                 ...DEFAULT_SETTINGS,
                 ...fileSettings,
             };
-            
+
             this._lastSavedSettings = JSON.stringify(this.settings);
             console.log("[SettingsStore] ✅ Настройки успешно загружены из файла.");
         } catch (error) {
