@@ -2,6 +2,7 @@
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
   import CreateTaskModal from "$lib/components/create-task-modal.svelte"; // Модальное окно задачи
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
+  import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
@@ -21,6 +22,7 @@
   import {
     Plus,
     Clock,
+    Settings,
     Calendar,
     ArrowDown,
     ArrowRight,
@@ -192,19 +194,6 @@
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
   );
-  // const futureTasks = $derived(
-  //   taskStore.tasks
-  //     .filter((task) => {
-  //       if (task.completed) return false;
-  //       const taskDate = new Date(task.date);
-  //       taskDate.setHours(0, 0, 0, 0);
-  //       const daysDiff = Math.floor(
-  //         (taskDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  //       );
-  //       return daysDiff > 0 && daysDiff <= settingsStore.settings.futureDays;
-  //     })
-  //     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-  // );
 
   // Слежение за размером окна
   function handleResize() {
@@ -230,17 +219,15 @@
 
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
+        <!-- Модальное окно создать задачу -->
         <Tooltip.Provider delayDuration={1000}>
           <Tooltip.Root>
             <Tooltip.Trigger
-              onclick={() => {
-                appStateStore.openCreateTaskModal();
-              }}
+              onclick={() => appStateStore.openCreateTaskModal()}
               class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
             >
               <Plus class="h-4 w-4" />
             </Tooltip.Trigger>
-
             <Tooltip.Content>
               <p>Добавить новую задачу</p>
             </Tooltip.Content>
@@ -251,7 +238,21 @@
         <ThemeToggle />
         <AlwaysOnTop />
         <AutostartToggle />
-        <SettingsModal />
+
+        <!-- Модальное окно настроек -->
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => appStateStore.openSettingsModal()}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
+            >
+              <Settings class="h-4 w-4" />
+            </Tooltip.Trigger>
+            <Tooltip.Content>
+              <p>Настройки</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       </div>
     </div>
 
@@ -346,7 +347,16 @@
                 <ArrowRight class="h-5 w-5" />
               {/if}
             </Card.Title>
+            <Card.Action>
+              <button
+                onclick={() => appStateStore.openSettingsModal()}
+                class={`w-20 ${buttonVariants({ variant: "outline", size: "sm" })}`}
+              >
+                {settingsStore.settings.autoDeleteDays} дн.
+              </button>
+            </Card.Action>
           </Card.Header>
+
           <Card.Content class="px-4">
             <div class="space-y-2">
               {#each completedTasks as task (task.id)}
@@ -359,6 +369,14 @@
     </div>
   </div>
 </div>
+
+{#if appStateStore.isSettingsModalOpen}
+  <SettingsModal />
+{/if}
+
+{#if appStateStore.isPasswordModalOpen}
+  <PasswordModal />
+{/if}
 
 {#if appStateStore.isEditTaskModalOpen}
   <EditTaskModal />

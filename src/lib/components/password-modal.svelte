@@ -6,15 +6,15 @@
     import { toastStore } from "$lib/stores/toast-store";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
+    import { appStateStore } from "$lib/stores/app-state.svelte";
 
-    let isPassModalOpen = $state(false);
     let newPass = $state("");
     let confirmPass = $state("");
     let inputPass = $state("");
 
     function cancelDialog() {
         resetForm();
-        isPassModalOpen = false;
+        appStateStore.closePasswordModal();
     }
 
     // Очистка формы
@@ -101,9 +101,12 @@
     }
 </script>
 
-<Dialog.Root open={isPassModalOpen} onOpenChange={cancelDialog}>
-    <Dialog.Trigger
-        onclick={() => (isPassModalOpen = true)}
+<Dialog.Root
+    open={appStateStore.isPasswordModalOpen}
+    onOpenChange={cancelDialog}
+>
+    <!-- <Dialog.Trigger
+        onclick={() => appStateStore.openPasswordModal()}
         class={`flex-1 transition-all duration-300 ${
             taskStore.currentPass
                 ? buttonVariants({ variant: "default" })
@@ -115,7 +118,7 @@
         {:else}
             Включить вход с паролем
         {/if}
-    </Dialog.Trigger>
+    </Dialog.Trigger> -->
     <Dialog.Content class="w-sm">
         {#if !taskStore.currentPass}
             <div class="flex flex-col items-center gap-2">

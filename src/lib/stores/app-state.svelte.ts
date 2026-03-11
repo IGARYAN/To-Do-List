@@ -12,6 +12,8 @@ class AppStateStore {
     // ==================== UI Состояния ====================
 
     // Состояние модальных окон
+    isPasswordModalOpen = $state(false);
+    isSettingsModalOpen = $state(false);
     isEditTaskModalOpen = $state(false);
     isCreateTaskModalOpen = $state(false);
     isDeleteConfirmDialogOpen = $state(false);
@@ -28,6 +30,34 @@ class AppStateStore {
     currentTime = $state(new Date());
 
     // ==================== Методы управления UI ====================
+
+    /**
+     * Открыть модальное окно настроек
+     */
+    openSettingsModal(): void {
+        this.isSettingsModalOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно настроек
+     */
+    closeSettingsModal(): void {
+        this.isSettingsModalOpen = false;
+    }
+
+    /**
+     * Открыть модальное окно пароля
+     */
+    openPasswordModal(): void {
+        this.isPasswordModalOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно пароля
+     */
+    closePasswordModal(): void {
+        this.isPasswordModalOpen = false;
+    }
 
     /**
      * Открыть модальное окно создания задачи
@@ -108,6 +138,8 @@ class AppStateStore {
         this.isCreateTaskModalOpen = false;
         this.isEditTaskModalOpen = false;
         this.isDeleteConfirmDialogOpen = false;
+        this.isSettingsModalOpen = false;
+        this.isPasswordModalOpen = false;
         this.taskCreateEditDelete = null;
         this.selectedColor = undefined;
     }
