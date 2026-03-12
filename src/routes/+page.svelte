@@ -1,13 +1,12 @@
 <script lang="ts">
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
-  import CreateTaskModal from "$lib/components/create-task-modal.svelte"; // Модальное окно задачи
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
   import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
-  import EditTaskModal from "$lib/components/edit-task-modal.svelte";
+  import TaskModal from "$lib/components/task-modal.svelte";
   import AutostartToggle from "$lib/components/autostart-toggle.svelte";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
@@ -370,20 +369,16 @@
   </div>
 </div>
 
+{#if appStateStore.isTaskModalOpen}
+  <TaskModal />
+{/if}
+
 {#if appStateStore.isSettingsModalOpen}
   <SettingsModal />
 {/if}
 
 {#if appStateStore.isPasswordModalOpen}
   <PasswordModal />
-{/if}
-
-{#if appStateStore.isEditTaskModalOpen}
-  <EditTaskModal />
-{/if}
-
-{#if appStateStore.isCreateTaskModalOpen}
-  <CreateTaskModal />
 {/if}
 
 {#if appStateStore.isDeleteConfirmDialogOpen}

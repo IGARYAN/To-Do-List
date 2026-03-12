@@ -14,9 +14,9 @@ class AppStateStore {
     // Состояние модальных окон
     isPasswordModalOpen = $state(false);
     isSettingsModalOpen = $state(false);
-    isEditTaskModalOpen = $state(false);
-    isCreateTaskModalOpen = $state(false);
     isDeleteConfirmDialogOpen = $state(false);
+    isTaskModalOpen = $state(false);
+    taskModalMode = $state<'create' | 'edit' | 'createFrom' | null>(null);
 
     // ==================== Данные для операций ====================
 
@@ -63,42 +63,37 @@ class AppStateStore {
      * Открыть модальное окно создания задачи
      */
     openCreateTaskModal(): void {
-        this.isCreateTaskModalOpen = true;
-    }
-
-    /**
-     * Закрыть модальное окно создания задачи
-     */
-    closeCreateTaskModal(): void {
-        this.isCreateTaskModalOpen = false;
-        this.taskCreateEditDelete = null;
-        this.selectedColor = undefined;
+        this.taskModalMode = 'create';
+        this.isTaskModalOpen = true;
     }
 
     /**
      * Открыть модальное окно редактирования задачи
      */
     openEditTaskModal(task: TypesTask): void {
+        this.taskModalMode = 'edit';
         this.taskCreateEditDelete = task;
-        this.isEditTaskModalOpen = true;
-    }
-
-    /**
-     * Закрыть модальное окно редактирования задачи
-     */
-    closeEditTaskModal(): void {
-        this.isEditTaskModalOpen = false;
-        this.taskCreateEditDelete = null;
-        this.selectedColor = undefined;
+        this.isTaskModalOpen = true;
     }
 
     /**
      * Функция открывает диалог создания задачи из существующей задачи
      */
     openCreateTaskFromExisting(task: TypesTask): void {
+        this.taskModalMode = 'createFrom';
         this.taskCreateEditDelete = task;
         this.selectedColor = task.color;
-        this.isCreateTaskModalOpen = true;
+        this.isTaskModalOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно создания, создания из и редактирования задачи
+     */
+    closeTaskModal(): void {
+        this.isTaskModalOpen = false;
+        this.taskCreateEditDelete = null;
+        this.selectedColor = undefined;
+        this.taskModalMode = null;
     }
 
     /**
@@ -113,8 +108,8 @@ class AppStateStore {
      * Закрыть диалог подтверждения удаления
      */
     closeDeleteConfirmDialog(): void {
-        this.isDeleteConfirmDialogOpen = false;
         this.taskCreateEditDelete = null;
+        this.isDeleteConfirmDialogOpen = false;
     }
 
     /**
@@ -135,8 +130,7 @@ class AppStateStore {
      * Закрыть все модальные окна и диалоги
      */
     closeAll(): void {
-        this.isCreateTaskModalOpen = false;
-        this.isEditTaskModalOpen = false;
+        this.isTaskModalOpen = false;
         this.isDeleteConfirmDialogOpen = false;
         this.isSettingsModalOpen = false;
         this.isPasswordModalOpen = false;
