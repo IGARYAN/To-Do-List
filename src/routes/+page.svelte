@@ -8,6 +8,7 @@
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
   import TaskModal from "$lib/components/task-modal.svelte";
   import AutostartToggle from "$lib/components/autostart-toggle.svelte";
+  import { generateTasksFromTemplates } from "$lib/services/repeat-service";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
   import * as Tooltip from "$lib/components/ui/tooltip/index.js";
@@ -18,12 +19,14 @@
   import { appStateStore } from "$lib/stores/app-state.svelte";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
   import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
+  import { goto } from "$app/navigation";
   import {
     Plus,
     Clock,
     Settings,
     Calendar,
     ArrowDown,
+    RepeatIcon,
     ArrowRight,
     CircleCheckBig,
   } from "@lucide/svelte"; // Иконки
@@ -56,12 +59,6 @@
     };
   });
 
-  // $effect для обновления alwaysOnTop при изменении настроек
-  $effect(() => {
-    const win = getCurrentWindow();
-    win.setAlwaysOnTop(settingsStore.settings.alwaysOnTop);
-  });
-
   // Функция расчёта миллисекунд до следующей полуночи
   function getMillisecondsToMidnight(bufferMs = 1000): number {
     // 1 секунда запаса
@@ -86,12 +83,30 @@
 
     const updateTimeAndReschedule = () => {
       appStateStore.updateTime(); // Обновляем время через стор
+      generateTasksFromTemplates();
       setupMidnightTimer(); // Регистрируем следующий таймер
     };
 
     const timeUntilMidnight = getMillisecondsToMidnight();
     midnightTimerId = setTimeout(updateTimeAndReschedule, timeUntilMidnight);
   }
+
+  // $effect для обновления alwaysOnTop при изменении настроек
+  $effect(() => {
+    const win = getCurrentWindow();
+    win.setAlwaysOnTop(settingsStore.settings.alwaysOnTop);
+  });
+
+  $effect(() => {
+    // Реагируем на изменение futureDays
+    const futureDays = settingsStore.settings.futureDays;
+    if (taskStore.isInitialized) {
+      console.log(
+        `[Page] futureDays изменился на ${futureDays}, перегенерируем задачи`,
+      );
+      generateTasksFromTemplates();
+    }
+  });
 
   /*
       Эффект для автоматического удаления выполненных задач
@@ -229,6 +244,21 @@
             </Tooltip.Trigger>
             <Tooltip.Content>
               <p>Добавить новую задачу</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        <!-- В панели управления рядом с остальными кнопками -->
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => goto("/templates")}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
+            >
+              <RepeatIcon class="h-4 w-4" />
+            </Tooltip.Trigger>
+            <Tooltip.Content>
+              <p>Шаблоны задач</p>
             </Tooltip.Content>
           </Tooltip.Root>
         </Tooltip.Provider>

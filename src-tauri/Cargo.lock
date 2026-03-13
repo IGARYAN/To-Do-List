@@ -3886,7 +3886,7 @@ dependencies = [
 
 [[package]]
 name = "todo-app-svelte"
-version = "0.0.69"
+version = "0.0.74"
 dependencies = [
  "serde",
  "serde_json",

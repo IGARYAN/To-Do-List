@@ -3,6 +3,8 @@
  * Использует $state для реактивности (без автосохранения - это UI состояние)
  */
 import type { TypesTask } from "$lib/types/types-task";
+import type { TypesRepeatTemplate } from "$lib/types/types-repeat-template";
+
 
 /**
  * Класс-стор для управления состоянием UI
@@ -17,6 +19,8 @@ class AppStateStore {
     isDeleteConfirmDialogOpen = $state(false);
     isTaskModalOpen = $state(false);
     taskModalMode = $state<'create' | 'edit' | 'createFrom' | null>(null);
+    isTemplateModalOpen = $state(false);
+    templateToEdit = $state<TypesRepeatTemplate | null>(null);
 
     // ==================== Данные для операций ====================
 
@@ -57,6 +61,23 @@ class AppStateStore {
      */
     closePasswordModal(): void {
         this.isPasswordModalOpen = false;
+    }
+
+    /**
+     * Открыть модальное окно шаблонов
+     */
+    openTemplateModal(template?: TypesRepeatTemplate): void {
+        this.templateToEdit = template ?? null;
+        this.isTemplateModalOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно шаблонов
+     */
+    closeTemplateModal(): void {
+        this.isTemplateModalOpen = false;
+        this.templateToEdit = null;
+        this.selectedColor = undefined;
     }
 
     /**
@@ -134,6 +155,8 @@ class AppStateStore {
         this.isDeleteConfirmDialogOpen = false;
         this.isSettingsModalOpen = false;
         this.isPasswordModalOpen = false;
+        this.isTemplateModalOpen = false;
+        this.templateToEdit = null;
         this.taskCreateEditDelete = null;
         this.selectedColor = undefined;
     }

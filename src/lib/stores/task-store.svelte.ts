@@ -6,6 +6,8 @@ import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { resourceDir, join } from "@tauri-apps/api/path";
 import { encryptData, decryptData } from "$lib/stores/crypto-store";
 import type { TypesTask } from "$lib/types/types-task";
+import type { TypesStorage } from "$lib/types/types-storage";
+import type { TypesRepeatTemplate } from "$lib/types/types-repeat-template";
 
 // Имя файла для хранения задач
 const TASKS_FILE = "tasks.json";
@@ -17,6 +19,9 @@ const TASKS_FILE = "tasks.json";
 class TaskStore {
     // Реактивное состояние задач
     tasks = $state<TypesTask[]>([]);
+
+    // Реактивное состояние шаблона задачи
+    templates = $state<TypesRepeatTemplate[]>([]);
 
     // Текущий пароль для шифрования
     currentPass = $state<string | null>(null);
@@ -50,75 +55,109 @@ class TaskStore {
         return this._filePath;
     }
 
-    /**
+    /**Загрузка — читаем оба массива
      * Загрузить задачи из файла (вызывается один раз при старте)
      */
     async loadTask(): Promise<boolean> {
         try {
             const path = await this.getFilePath();
-            console.log(`[TaskStore] Загрузка задач из: ${path}`);
-
             const content = await readTextFile(path);
             const fileData = JSON.parse(content);
             const isFileEncrypted = !!fileData.cipher;
 
             if (isFileEncrypted) {
-                console.log("[TaskStore] 📦 Найден зашифрованный файл задач.");
-
                 if (!this.currentPass) {
-                    console.warn("[TaskStore] ⚠️ Пароль не установлен. Невозможно расшифровать задачи.");
+                    console.warn("[TaskStore] ⚠️ Пароль не установлен.");
                     return false;
                 }
 
-                const decrypted = await decryptData(fileData.cipher, this.currentPass, fileData.iv, fileData.salt);
+                const decrypted = await decryptData(
+                    fileData.cipher,
+                    this.currentPass,
+                    fileData.iv,
+                    fileData.salt
+                );
 
                 if (decrypted.success && decrypted.data) {
-                    this.tasks = decrypted.data;
-                    this._lastSavedTasks = JSON.stringify(this.tasks);
-                    console.log("[TaskStore] ✅ Задачи успешно расшифрованы и загружены.");
+                    this.tasks = decrypted.data.tasks ?? [];
+                    this.templates = decrypted.data.templates ?? [];
+                    this._lastSavedTasks = JSON.stringify({ tasks: this.tasks, templates: this.templates });
                     this.isInitialized = true;
                     return true;
                 } else {
-                    console.warn("[TaskStore] ⚠️ Ошибка расшифровки задач. Возможно, пароль неверный.");
+                    console.warn("[TaskStore] ⚠️ Ошибка расшифровки.");
                     return false;
                 }
             } else {
-                console.log("[TaskStore] 📂 Найден незашифрованный файл задач.");
-                this.tasks = fileData;
-                this._lastSavedTasks = JSON.stringify(this.tasks);
-                console.log("[TaskStore] ✅ Задачи успешно загружены из файла.");
+                // Поддержка старого формата (массив задач без шаблонов)
+                if (Array.isArray(fileData)) {
+                    console.warn("[TaskStore] 📂 Старый формат файла, мигрируем...");
+                    this.tasks = fileData;
+                    this.templates = [];
+                } else {
+                    this.tasks = fileData.tasks ?? [];
+                    this.templates = fileData.templates ?? [];
+                }
+                this._lastSavedTasks = JSON.stringify({ tasks: this.tasks, templates: this.templates });
                 this.isInitialized = true;
                 return true;
             }
         } catch (error) {
-            console.warn("[TaskStore] ⚠️ Файл с задачами не найден. Начинаем с пустым списком.", error);
+            console.warn("[TaskStore] ⚠️ Файл не найден, начинаем с пустым списком.", error);
             this.isInitialized = true;
             return true;
         }
     }
 
-    /**
+    /**Сохранение — сохраняем оба массива
      * Сохранить задачи в файл
      */
     async saveTask(): Promise<void> {
         try {
             const path = await this.getFilePath();
-            console.log(`[TaskStore] Сохранение задач по пути: ${path}`);
-            console.log(`[TaskStore] Пароль установлен: ${!!this.currentPass}`);
+            const storage: TypesStorage = {
+                tasks: this.tasks,
+                templates: this.templates,
+            };
 
             if (this.currentPass) {
-                console.log("[TaskStore] 🔐 Пароль установлен. Задачи будут зашифрованы и сохранены.");
-                const encrypted = await encryptData(this.tasks, this.currentPass);
-                const content = JSON.stringify(encrypted, null, 2);
-                await writeTextFile(path, content);
-                console.log("[TaskStore] ✅ Задачи успешно зашифрованы и сохранены.");
+                const encrypted = await encryptData(storage, this.currentPass);
+                await writeTextFile(path, JSON.stringify(encrypted, null, 2));
+                console.log("[TaskStore] ✅ Данные зашифрованы и сохранены.");
             } else {
-                const content = JSON.stringify(this.tasks, null, 2);
-                await writeTextFile(path, content);
-                console.log("[TaskStore] 💾 Задачи успешно сохранены без шифрования.");
+                await writeTextFile(path, JSON.stringify(storage, null, 2));
+                console.log("[TaskStore] 💾 Данные сохранены.");
             }
         } catch (error) {
-            console.error("[TaskStore] ❌ Ошибка при сохранении задач:", error);
+            console.error("[TaskStore] ❌ Ошибка сохранения:", error);
+        }
+    }
+
+    // Методы для шаблонов
+    addTemplate(template: TypesRepeatTemplate): void {
+        this.templates = [...this.templates, template];
+    }
+
+    updateTemplate(id: string, updates: Partial<TypesRepeatTemplate>): void {
+        this.templates = this.templates.map(t =>
+            t.id === id ? { ...t, ...updates } : t
+        );
+    }
+
+    deleteTemplate(id: string, deleteFutureTasks: boolean): void {
+        this.templates = this.templates.filter(t => t.id !== id);
+
+        if (deleteFutureTasks) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            // Удаляем незавершённые будущие задачи связанные с шаблоном
+            this.tasks = this.tasks.filter(task => {
+                if (task.repeatTemplateId !== id) return true;
+                if (task.completed) return true; // выполненные не трогаем
+                const taskDate = new Date(task.date);
+                taskDate.setHours(0, 0, 0, 0);
+                return taskDate < today; // прошедшие не трогаем
+            });
         }
     }
 

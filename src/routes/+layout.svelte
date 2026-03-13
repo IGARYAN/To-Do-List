@@ -8,6 +8,7 @@
   import { restoreWindow, initWindow } from "$lib/stores/window-state";
   import { settingsStore } from "$lib/stores/settings-store.svelte";
   import { taskStore } from "$lib/stores/task-store.svelte";
+  import { generateTasksFromTemplates } from "$lib/services/repeat-service";
   import { goto } from "$app/navigation";
 
   // Блокируем системное контекстное меню
@@ -33,7 +34,10 @@
   // $effect для автосохранения задач при изменении
   // Вынесен из TaskStore, чтобы избежать ошибки Svelte effect_orphan.
   $effect(() => {
-    const currentTasksStr = JSON.stringify(taskStore.tasks);
+    const currentTasksStr = JSON.stringify({
+      tasks: taskStore.tasks,
+      templates: taskStore.templates,
+    });
 
     // Подробный лог состояния для отладки реактивности
     console.log("[Layout] [TaskAutoSave] Проверка изменений задач", {
@@ -111,6 +115,10 @@
 
       console.log("[Layout] Загружаем задачи...");
       const result = await taskStore.loadTask();
+      // Генерируем задачи из шаблонов после загрузки
+      if (result) {
+        generateTasksFromTemplates();
+      }
 
       console.log("[Layout] Восстанавливаем состояние окна...");
       await restoreWindow();
