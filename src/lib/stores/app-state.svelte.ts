@@ -18,9 +18,10 @@ class AppStateStore {
     isSettingsModalOpen = $state(false);
     isDeleteConfirmDialogOpen = $state(false);
     isTaskModalOpen = $state(false);
-    taskModalMode = $state<'create' | 'edit' | 'createFrom' | null>(null);
     isTemplateModalOpen = $state(false);
+    isTemplatesListModalOpen = $state(false);
     templateToEdit = $state<TypesRepeatTemplate | null>(null);
+    taskModalMode = $state<'create' | 'edit' | 'createFrom' | null>(null);
 
     // ==================== Данные для операций ====================
 
@@ -61,6 +62,20 @@ class AppStateStore {
      */
     closePasswordModal(): void {
         this.isPasswordModalOpen = false;
+    }
+
+    /**
+     * Открыть модальное окно лист шаблонов
+     */
+    openTemplatesListModal(): void {
+        this.isTemplatesListModalOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно лист шаблонов
+     */
+    closeTemplatesListModal(): void {
+        this.isTemplatesListModalOpen = false;
     }
 
     /**

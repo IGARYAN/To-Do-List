@@ -5,7 +5,9 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
+    import * as Select from "$lib/components/ui/select";
     import * as Tabs from "$lib/components/ui/tabs";
+    import * as Field from "$lib/components/ui/field/index.js";
     import ColorPicker from "$lib/components/color-picker.svelte";
     import { toastStore } from "$lib/stores/toast-store";
     import { taskStore } from "$lib/stores/task-store.svelte";
@@ -226,7 +228,7 @@
         if (!open) cancelDialog();
     }}
 >
-    <Dialog.Content class="sm:max-w-md">
+    <Dialog.Content class="md:max-w-lg">
         <Dialog.Header>
             <Dialog.Title>
                 {isEditMode ? "Редактировать шаблон" : "Новый шаблон"}
@@ -261,11 +263,14 @@
                 />
             </div>
 
-            <Separator />
+            <Field.Separator >jhgjhgjhghj</Field.Separator>
 
             <!-- Тип повторения -->
             <Tabs.Root bind:value={repeatType}>
                 <Tabs.List class="w-full">
+                    <Tabs.Trigger value="not" class="flex-1"
+                        >Нет</Tabs.Trigger
+                    >
                     <Tabs.Trigger value="weekly" class="flex-1"
                         >Еженедельно</Tabs.Trigger
                     >
@@ -278,12 +283,37 @@
                 </Tabs.List>
 
                 <!-- Еженедельно — выбор дней недели -->
+                <Tabs.Content value="not">
+                    <div class="flex gap-1 pt-2 justify-between">
+                        {#each weekDays as day}
+                            <button
+                                onclick={() => toggleWeekDay(day.value)}
+                                class={`w-15 h-9 rounded text-sm font-medium transition-all duration-200
+                                    ${
+                                        selectedWeekDays.includes(day.value)
+                                            ? buttonVariants({
+                                                  variant: "default",
+                                                  size: "sm",
+                                              })
+                                            : buttonVariants({
+                                                  variant: "outline",
+                                                  size: "sm",
+                                              })
+                                    }`}
+                            >
+                                {day.label}
+                            </button>
+                        {/each}
+                    </div>
+                </Tabs.Content>
+
+                <!-- Еженедельно — выбор дней недели -->
                 <Tabs.Content value="weekly">
                     <div class="flex gap-1 pt-2 justify-between">
                         {#each weekDays as day}
                             <button
                                 onclick={() => toggleWeekDay(day.value)}
-                                class={`w-10 h-10 rounded text-sm font-medium transition-all duration-200
+                                class={`w-15 h-9 rounded text-sm font-medium transition-all duration-200
                                     ${
                                         selectedWeekDays.includes(day.value)
                                             ? buttonVariants({
@@ -326,16 +356,26 @@
                     <div class="flex items-center gap-4 pt-2">
                         <div class="flex items-center gap-2">
                             <Label>Месяц</Label>
-                            <select
-                                bind:value={yearMonth}
-                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+
+                            <Select.Root
+                                type="single"
+                                value={String(yearMonth)}
+                                onValueChange={(v) => (yearMonth = Number(v))}
                             >
-                                {#each months as month}
-                                    <option value={month.value}
-                                        >{month.label}</option
-                                    >
-                                {/each}
-                            </select>
+                                <Select.Trigger class="w-30">
+                                    {months.find((m) => m.value === yearMonth)
+                                        ?.label ?? "Выберите месяц"}
+                                </Select.Trigger>
+                                <Select.Content>
+                                    {#each months as month}
+                                        <Select.Item
+                                            value={String(month.value)}
+                                        >
+                                            {month.label}
+                                        </Select.Item>
+                                    {/each}
+                                </Select.Content>
+                            </Select.Root>
                         </div>
                         <div class="flex items-center gap-2">
                             <Label>Число</Label>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import RepeatTemplatesList from "$lib/components/repeat-templates-list.svelte";
+    import RepeatTemplatesList from "$lib/components/repeat-templates-list-modal.svelte";
     import RepeatTemplateModal from "$lib/components/repeat-template-modal.svelte";
     import { appStateStore } from "$lib/stores/app-state.svelte";
     import { buttonVariants } from "$lib/components/ui/button";

@@ -1,5 +1,7 @@
 <script lang="ts">
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
+  import RepeatTemplateModal from "$lib/components/repeat-template-modal.svelte";
+  import RepeatTemplatesListModal from "$lib/components/repeat-templates-list-modal.svelte";
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
   import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
@@ -18,8 +20,8 @@
   import { settingsStore } from "$lib/stores/settings-store.svelte";
   import { appStateStore } from "$lib/stores/app-state.svelte";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
-  import { goto } from "$app/navigation";
   import {
     Plus,
     Clock,
@@ -233,35 +235,35 @@
 
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
-        <!-- Модальное окно создать задачу -->
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
+        <!-- Кнопка создать задачу -->
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger
+            class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
+          >
+            <Plus class="h-4 w-4" />
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content align="end">
+            <DropdownMenu.Item
               onclick={() => appStateStore.openCreateTaskModal()}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
             >
               <Plus class="h-4 w-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content>
-              <p>Добавить новую задачу</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-
-        <!-- В панели управления рядом с остальными кнопками -->
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => goto("/templates")}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
+              <span>Создать задачу</span>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onclick={() => appStateStore.openTemplateModal()}
             >
               <RepeatIcon class="h-4 w-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content>
-              <p>Шаблоны задач</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+              <span>Создать повторяющуюся задачу</span>
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item
+              onclick={() => appStateStore.openTemplatesListModal()}
+            >
+              <Settings class="h-4 w-4" />
+              <span>Повторяющиеся задачи</span>
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
 
         <!-- <CreateTaskModal /> -->
         <ThemeToggle />
@@ -413,4 +415,12 @@
 
 {#if appStateStore.isDeleteConfirmDialogOpen}
   <DeleteConfirmDialog />
+{/if}
+
+{#if appStateStore.isTemplateModalOpen}
+  <RepeatTemplateModal />
+{/if}
+
+{#if appStateStore.isTemplatesListModalOpen}
+  <RepeatTemplatesListModal />
 {/if}

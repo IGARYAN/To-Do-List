@@ -187,7 +187,7 @@
         if (!open) cancelDialog();
     }}
 >
-    <Dialog.Content class="sm:max-w-md">
+    <Dialog.Content class="md:max-w-lg">
         <Dialog.Header>
             <Dialog.Title>
                 {isEditMode ? "Редактировать задачу" : "Новая задача"}
@@ -230,7 +230,7 @@
                 </div>
                 <Popover.Root bind:open={isPopoverOpen}>
                     <Popover.Trigger
-                        class={`justify-start text-left font-normal ${buttonVariants({ variant: "outline" })}`}
+                        class={`justify-start w-52 text-left font-normal ${buttonVariants({ variant: "outline" })}`}
                     >
                         {value
                             ? formatter.format(value.toDate(getLocalTimeZone()))
