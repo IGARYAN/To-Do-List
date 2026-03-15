@@ -13,11 +13,14 @@
         Plus,
         Pencil,
         Trash2,
+        Calendar,
         EllipsisVertical,
         RepeatIcon,
         PauseCircle,
         PlayCircle,
     } from "@lucide/svelte";
+    import { format } from "date-fns";
+    import { ru } from "date-fns/locale";
 
     // Диалог подтверждения удаления
     let isDeleteDialogOpen = $state(false);
@@ -45,15 +48,20 @@
         if (template.type === "weekly" && template.weekDays?.length) {
             return template.weekDays.map((d) => weekDayNames[d]).join(", ");
         }
-        if (template.type === "monthly" && template.monthDay) {
-            return `${template.monthDay} числа каждого месяца`;
+        if (template.type === "monthly") {
+            if (template.lastDayOfMonth) {
+                return "Последний день месяца";
+            }
+            if (template.monthDay) {
+                return `${template.monthDay} числа`;
+            }
         }
         if (
             template.type === "yearly" &&
             template.yearMonth &&
             template.yearDay
         ) {
-            return `${template.yearDay} ${monthNames[template.yearMonth]} каждый год`;
+            return `${monthNames[template.yearMonth]} ${template.yearDay} числа`;
         }
         return "";
     }
@@ -119,7 +127,7 @@
         if (!open) appStateStore.closeTemplatesListModal();
     }}
 >
-    <Dialog.Content class="md:max-w-4xl">
+    <Dialog.Content class="md:max-w-xl">
         <Dialog.Header>
             <Dialog.Title>Повторяющиеся задачи</Dialog.Title>
         </Dialog.Header>
@@ -133,7 +141,7 @@
             <Button
                 variant="outline"
                 size="icon"
-                onclick={() => appStateStore.openTemplateModal()}
+                onclick={() => appStateStore.openCreateTemplateModal()}
             >
                 <Plus class="h-4 w-4" />
             </Button>
@@ -153,7 +161,7 @@
                         <div class="flex items-center gap-3">
                             <!-- Цветная полоса -->
                             <div
-                                class="w-2 h-10 rounded flex-shrink-0"
+                                class="ml-1 w-6 h-6 rounded flex-shrink-0"
                                 style="background-color: {ColorMap[
                                     template.color ?? 'red'
                                 ]}"
@@ -161,29 +169,46 @@
 
                             <!-- Информация -->
                             <div class="flex-1 min-w-0">
+                                <!-- Строка 1: Заголовок -->
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium"
                                         >{template.title}</span
                                     >
-                                    <Badge variant="secondary" class="text-xs">
-                                        {getRepeatTypeName(template.type)}
-                                    </Badge>
                                     {#if !template.isActive}
                                         <Badge variant="outline" class="text-xs"
                                             >Пауза</Badge
                                         >
                                     {/if}
                                 </div>
-                                <p class="text-xs text-muted-foreground mt-0.5">
-                                    {getRepeatDescription(template)}
-                                </p>
+
+                                <!-- Строка 2: Описание -->
                                 {#if template.description}
                                     <p
-                                        class="text-xs text-muted-foreground truncate"
+                                        class="text-sm text-muted-foreground truncate mt-0.5"
                                     >
                                         {template.description}
                                     </p>
                                 {/if}
+
+                                <!-- Строка 3: Метод повторения -->
+                                <p class="text-sm text-muted-foreground mt-0.5">
+                                    <span class="font-medium"
+                                        >{getRepeatTypeName(template.type)} -
+                                    </span>
+                                    {getRepeatDescription(template)}
+                                </p>
+
+                                <!-- Строка 4: Дата создания -->
+                                <div
+                                    class="flex items-center gap-1 text-sm text-muted-foreground mt-0.5"
+                                >
+                                    <Calendar class="h-4 w-4" />
+                                    {format(
+                                        new Date(template.createdAt),
+                                        "d MMMM yyyy",
+                                        { locale: ru },
+                                    )}
+                                </div>
                             </div>
 
                             <!-- Меню действий -->
@@ -197,12 +222,12 @@
                                     <!-- Редактировать -->
                                     <DropdownMenu.Item
                                         onclick={() =>
-                                            appStateStore.openTemplateModal(
+                                            appStateStore.openEditTemplateModal(
                                                 template,
                                             )}
                                     >
                                         <Pencil class="h-4 w-4" />
-                                        <span>Редактировать</span>
+                                        <span>Изменить</span>
                                     </DropdownMenu.Item>
 
                                     <!-- Пауза / Возобновить -->
@@ -211,10 +236,10 @@
                                     >
                                         {#if template.isActive}
                                             <PauseCircle class="h-4 w-4" />
-                                            <span>Приостановить</span>
+                                            <span>Пауза</span>
                                         {:else}
                                             <PlayCircle class="h-4 w-4" />
-                                            <span>Возобновить</span>
+                                            <span>Старт</span>
                                         {/if}
                                     </DropdownMenu.Item>
 

@@ -5,7 +5,6 @@
 import type { TypesTask } from "$lib/types/types-task";
 import type { TypesRepeatTemplate } from "$lib/types/types-repeat-template";
 
-
 /**
  * Класс-стор для управления состоянием UI
  * Содержит состояния модальных окон, диалогов и временных данных
@@ -21,7 +20,7 @@ class AppStateStore {
     isTemplateModalOpen = $state(false);
     isTemplatesListModalOpen = $state(false);
     templateToEdit = $state<TypesRepeatTemplate | null>(null);
-    taskModalMode = $state<'create' | 'edit' | 'createFrom' | null>(null);
+    taskModalMode = $state<'create' | 'edit' | 'createFrom' | 'createTemplate' | 'editTemplate' | null>(null);
 
     // ==================== Данные для операций ====================
 
@@ -95,6 +94,17 @@ class AppStateStore {
         this.selectedColor = undefined;
     }
 
+    openCreateTemplateModal(): void {
+        this.taskModalMode = 'createTemplate';
+        this.isTaskModalOpen = true;
+    }
+
+    openEditTemplateModal(template: TypesRepeatTemplate): void {
+        this.templateToEdit = template;
+        this.taskModalMode = 'editTemplate';
+        this.isTaskModalOpen = true;
+    }
+
     /**
      * Открыть модальное окно создания задачи
      */
@@ -128,6 +138,7 @@ class AppStateStore {
     closeTaskModal(): void {
         this.isTaskModalOpen = false;
         this.taskCreateEditDelete = null;
+        this.templateToEdit = null;
         this.selectedColor = undefined;
         this.taskModalMode = null;
     }

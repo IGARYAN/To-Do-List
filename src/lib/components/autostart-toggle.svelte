@@ -1,8 +1,5 @@
 <script lang="ts">
     import { toastStore } from "$lib/stores/toast-store";
-    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
-    import { buttonVariants } from "$lib/components/ui/button";
-    import { Power, PowerOff } from "@lucide/svelte";
     import {
         isEnabled as isAutostartEnabled,
         enable as enableAutostart,
@@ -62,26 +59,3 @@
         }
     }
 </script>
-
-<Tooltip.Provider delayDuration={1000}>
-    <Tooltip.Root>
-        <Tooltip.Trigger
-            onclick={handleToggle}
-            disabled={isLoading}
-            class={`transition-all duration-300 ${
-                isAutostart
-                    ? buttonVariants({ variant: "default", size: "icon" })
-                    : buttonVariants({ variant: "outline", size: "icon" })
-            }`}
-        >
-            {#if isAutostart}
-                <Power class="h-4 w-4" />
-            {:else}
-                <PowerOff class="h-4 w-4" />
-            {/if}
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top">
-            <p>Автозапуск вместе с Windows</p>
-        </Tooltip.Content>
-    </Tooltip.Root>
-</Tooltip.Provider>

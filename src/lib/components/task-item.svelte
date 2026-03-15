@@ -15,6 +15,7 @@
     Pencil,
     Trash2,
     Calendar,
+    RepeatIcon,
     CircleCheckBig,
     EllipsisVertical,
   } from "@lucide/svelte"; // Иконки
@@ -51,7 +52,7 @@
   */
 
   // Дата выполнения задачи
-  const taskDate = $derived(() => {
+  const taskDate = $derived.by(() => {
     const date = new Date(task.date);
     date.setHours(0, 0, 0, 0);
     return date;
@@ -62,18 +63,28 @@
     Используются для отображения соответствующих бейджей
   */
   const isOverdue = $derived(
-    taskDate().getTime() < appStateStore.today.getTime() && !task.completed,
+    taskDate.getTime() < appStateStore.today.getTime() && !task.completed,
   );
   const isToday = $derived(
-    taskDate().getTime() === appStateStore.today.getTime(),
+    taskDate.getTime() === appStateStore.today.getTime(),
   );
   const isTomorrow = $derived(
-    taskDate().getTime() === appStateStore.tomorrow.getTime(),
+    taskDate.getTime() === appStateStore.tomorrow.getTime(),
   );
 
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
-    appStateStore.openEditTaskModal(task);
+    if (task.repeatTemplateId) {
+      // Находим шаблон по ID и открываем редактирование шаблона
+      const template = taskStore.templates.find(
+        (t) => t.id === task.repeatTemplateId,
+      );
+      if (template) {
+        appStateStore.openEditTemplateModal(template);
+      }
+    } else {
+      appStateStore.openEditTaskModal(task);
+    }
   }
 
   // Функция открывает диалог создания задачи из существующей задачи
@@ -113,18 +124,23 @@
 
     <!-- Цветная полоса -->
     <div
-      class="-mr-1 w-2 rounded"
+      class="w-2 rounded"
       style="background-color: {ColorMap[task.color ?? 'red']}"
     ></div>
 
     <!-- Основная информация о задаче -->
     <div class="flex-1 min-w-0">
       <!-- Название задачи -->
-      <h3
-        class={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
-      >
-        {task.title}
-      </h3>
+      <div class="flex items-center gap-2">
+        {#if task.repeatTemplateId}
+          <RepeatIcon class="h-4 w-4 text-green-500 flex-shrink-0" />
+        {/if}
+        <h3
+          class={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
+        >
+          {task.title}
+        </h3>
+      </div>
 
       <!-- Описание задачи (если есть) -->
       {#if task.description}
@@ -140,10 +156,10 @@
       {/if}
 
       <!-- Дата и статусные бейджи -->
-      <div class="flex items-center gap-2 pt-2">
-        <div class="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar class="h-3 w-3" />
-          {format(taskDate(), "d MMMM yyyy", { locale: ru })}
+      <div class="flex items-center gap-2 pt-1">
+        <div class="flex items-center gap-1 text-sm text-muted-foreground">
+          <Calendar class="h-4 w-4" />
+          {format(taskDate, "d MMMM yyyy", { locale: ru })}
         </div>
 
         <!-- Бейдж "Сегодня" -->

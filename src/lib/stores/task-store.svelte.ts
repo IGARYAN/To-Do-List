@@ -148,15 +148,13 @@ class TaskStore {
         this.templates = this.templates.filter(t => t.id !== id);
 
         if (deleteFutureTasks) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            // Удаляем незавершённые будущие задачи связанные с шаблоном
-            this.tasks = this.tasks.filter(task => {
-                if (task.repeatTemplateId !== id) return true;
-                if (task.completed) return true; // выполненные не трогаем
-                const taskDate = new Date(task.date);
-                taskDate.setHours(0, 0, 0, 0);
-                return taskDate < today; // прошедшие не трогаем
+            // Удаляем все задачи шаблона полностью
+            this.tasks = this.tasks.filter(task => task.repeatTemplateId !== id);
+        } else {
+            // Все задачи становятся обычными — убираем repeatTemplateId
+            this.tasks = this.tasks.map(task => {
+                if (task.repeatTemplateId !== id) return task;
+                return { ...task, repeatTemplateId: undefined };
             });
         }
     }

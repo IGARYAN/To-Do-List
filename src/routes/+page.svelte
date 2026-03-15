@@ -1,6 +1,5 @@
 <script lang="ts">
   import AlwaysOnTop from "$lib/components/always-on-top-toggle.svelte"; // Переключатель по верх всех окон
-  import RepeatTemplateModal from "$lib/components/repeat-template-modal.svelte";
   import RepeatTemplatesListModal from "$lib/components/repeat-templates-list-modal.svelte";
   import SettingsModal from "$lib/components/settings-modal.svelte"; // Модальное окно настроек
   import PasswordModal from "$lib/components/password-modal.svelte"; // Модальное окно пароля
@@ -9,19 +8,17 @@
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
   import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
   import TaskModal from "$lib/components/task-modal.svelte";
-  import AutostartToggle from "$lib/components/autostart-toggle.svelte";
   import { generateTasksFromTemplates } from "$lib/services/repeat-service";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { Badge } from "$lib/components/ui/badge"; // Бейджи UI
-  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
+  import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
   import { onMount } from "svelte"; // Хук жизненного цикла
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { taskStore } from "$lib/stores/task-store.svelte";
   import { settingsStore } from "$lib/stores/settings-store.svelte";
   import { appStateStore } from "$lib/stores/app-state.svelte";
   import * as Card from "$lib/components/ui/card/index.js"; // Карточки UI
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import {
     Plus,
     Clock,
@@ -38,6 +35,8 @@
   let isSingleColumn = $state(false);
 
   let midnightTimerId: NodeJS.Timeout | null = null;
+
+  let lastFutureDays = settingsStore.settings.futureDays;
 
   /*
       Подписка на изменения в хранилищах при монтировании компонента
@@ -99,10 +98,11 @@
     win.setAlwaysOnTop(settingsStore.settings.alwaysOnTop);
   });
 
+  // Реагируем на изменение futureDays
   $effect(() => {
-    // Реагируем на изменение futureDays
     const futureDays = settingsStore.settings.futureDays;
-    if (taskStore.isInitialized) {
+    if (taskStore.isInitialized && futureDays !== lastFutureDays) {
+      lastFutureDays = futureDays;
       console.log(
         `[Page] futureDays изменился на ${futureDays}, перегенерируем задачи`,
       );
@@ -236,41 +236,39 @@
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
         <!-- Кнопка создать задачу -->
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
-          >
-            <Plus class="h-4 w-4" />
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content align="end">
-            <DropdownMenu.Item
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
               onclick={() => appStateStore.openCreateTaskModal()}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
             >
               <Plus class="h-4 w-4" />
-              <span>Создать задачу</span>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              onclick={() => appStateStore.openTemplateModal()}
+            </Tooltip.Trigger>
+            <Tooltip.Content>
+              <p>Создать задачу</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
+
+        <!-- Кнопка повторяющихся задач -->
+        <Tooltip.Provider delayDuration={1000}>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              onclick={() => appStateStore.openTemplatesListModal()}
+              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
             >
               <RepeatIcon class="h-4 w-4" />
-              <span>Создать повторяющуюся задачу</span>
-            </DropdownMenu.Item>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item
-              onclick={() => appStateStore.openTemplatesListModal()}
-            >
-              <Settings class="h-4 w-4" />
-              <span>Повторяющиеся задачи</span>
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+            </Tooltip.Trigger>
+            <Tooltip.Content>
+              <p>Повторяющиеся задачи</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
+        </Tooltip.Provider>
 
-        <!-- <CreateTaskModal /> -->
         <ThemeToggle />
         <AlwaysOnTop />
-        <AutostartToggle />
 
-        <!-- Модальное окно настроек -->
+        <!-- Кнопка настроек -->
         <Tooltip.Provider delayDuration={1000}>
           <Tooltip.Root>
             <Tooltip.Trigger
@@ -415,10 +413,6 @@
 
 {#if appStateStore.isDeleteConfirmDialogOpen}
   <DeleteConfirmDialog />
-{/if}
-
-{#if appStateStore.isTemplateModalOpen}
-  <RepeatTemplateModal />
 {/if}
 
 {#if appStateStore.isTemplatesListModalOpen}

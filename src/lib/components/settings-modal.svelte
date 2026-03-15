@@ -9,11 +9,17 @@
   import { settingsStore } from "$lib/stores/settings-store.svelte";
   import { appStateStore } from "$lib/stores/app-state.svelte";
   import { taskStore } from "$lib/stores/task-store.svelte";
+  import {
+    isEnabled as isAutostartEnabled,
+    enable as enableAutostart,
+    disable as disableAutostart,
+  } from "@tauri-apps/plugin-autostart";
 
   // Локальные копии полей
   let localAutoDeleteDays = $state("");
   let localFutureDays = $state("");
   let localSaveWindowState = $state(false);
+  let localAutostart = $state(false);
 
   // Флаг для детекта именно момента открытия модалки.
   // Нужен, чтобы не перезаписывать поля при каждом вводе пользователя.
@@ -27,6 +33,10 @@
       localAutoDeleteDays = String(settingsStore.settings.autoDeleteDays);
       localFutureDays = String(settingsStore.settings.futureDays);
       localSaveWindowState = settingsStore.settings.saveWindowState;
+      // Загружаем текущее состояние автозапуска из системы
+      isAutostartEnabled().then((enabled) => {
+        localAutostart = enabled;
+      });
     }
     wasSettingsModalOpen = appStateStore.isSettingsModalOpen;
   });
@@ -55,21 +65,25 @@
     return true;
   }
 
-  function saveSettings() {
+  async function saveSettings() {
     if (!validate()) return;
 
-    console.log("[SettingsModal] Сохраняем настройки из локального состояния", {
-      autoDeleteDays: localAutoDeleteDays,
-      futureDays: localFutureDays,
-      saveWindowState: localSaveWindowState,
-    });
-
-    // Используем метод updateSettings из стора
     settingsStore.updateSettings({
       autoDeleteDays: Number(localAutoDeleteDays),
       futureDays: Number(localFutureDays),
       saveWindowState: localSaveWindowState,
     });
+
+    // Применяем автозапуск
+    try {
+      if (localAutostart) {
+        await enableAutostart();
+      } else {
+        await disableAutostart();
+      }
+    } catch (error) {
+      console.error("[SettingsModal] Ошибка изменения автозапуска:", error);
+    }
 
     toastStore.add({
       title: "Настройки успешно сохранены",
@@ -93,7 +107,7 @@
   open={appStateStore.isSettingsModalOpen}
   onOpenChange={closeSettings}
 >
-  <Dialog.Content class="sm:max-w-md" onOpenAutoFocus={handleOpenAutoFocus}>
+  <Dialog.Content class="md:max-w-lg" onOpenAutoFocus={handleOpenAutoFocus}>
     <Dialog.Header>
       <Dialog.Title class="flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -162,6 +176,11 @@
     <div class="flex items-center justify-between">
       <span class="pl-1">Сохранять и восстанавливать состояние окна</span>
       <Switch bind:checked={localSaveWindowState} />
+    </div>
+
+    <div class="flex items-center justify-between">
+      <span class="pl-1">Автозапуск программы вместе с Windows</span>
+      <Switch bind:checked={localAutostart} />
     </div>
 
     <Separator />

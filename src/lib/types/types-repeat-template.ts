@@ -1,7 +1,7 @@
 /**
  * Тип для шаблона повторяющейся задачи
  */
-export type RepeatType = 'weekly' | 'monthly' | 'yearly';
+export type RepeatType = 'not_repeat' | 'weekly' | 'monthly' | 'yearly';
 
 export type TypesRepeatTemplate = {
     // Уникальный ID шаблона
