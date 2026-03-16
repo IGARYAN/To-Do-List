@@ -23,13 +23,13 @@
   }
 
   function cancelDialog() {
-    appStateStore.closeDeleteConfirmDialog();
+    appStateStore.closeDeleteTaskDialog();
   }
 </script>
 
 {#if appStateStore.taskCreateEditDelete}
   <AlertDialog.Root
-    bind:open={appStateStore.isDeleteConfirmDialogOpen}
+    bind:open={appStateStore.isDeleteTaskDialogOpen}
     onOpenChange={(open) => {
       if (!open) cancelDialog();
     }}
@@ -38,7 +38,7 @@
       <AlertDialog.Header>
         <AlertDialog.Title class="flex items-center gap-2">
           <AlertTriangle class="h-5 w-5 text-red-500" />
-          Подтвердите удаление
+          Подтвердите удаление задачи
         </AlertDialog.Title>
       </AlertDialog.Header>
 
@@ -47,7 +47,7 @@
           Вы уверены, что хотите удалить задачу <span class="font-semibold"
             >"{appStateStore.taskCreateEditDelete.title}"</span
           >?
-          <br />
+          <br /><br />
           <span class="text-red-500">Это действие нельзя отменить.</span>
         </AlertDialog.Description>
       </div>

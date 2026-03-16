@@ -6,7 +6,8 @@
   import ThemeToggle from "$lib/components/theme-toggle.svelte"; // Переключатель темы
   import TaskItem from "$lib/components/task-item.svelte"; // Компонент отображения задачи
   import TaskStatistics from "$lib/components/task-statistics.svelte"; // Компонент статистики
-  import DeleteConfirmDialog from "$lib/components/delete-confirm-dialog.svelte";
+  import DeleteTaskDialog from "$lib/components/delete-task-dialog.svelte";
+  import DeleteTemplateDialog from "$lib/components/delete-template-dialog.svelte";
   import TaskModal from "$lib/components/task-modal.svelte";
   import { generateTasksFromTemplates } from "$lib/services/repeat-service";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
@@ -34,7 +35,7 @@
 
   let isSingleColumn = $state(false);
 
-  let midnightTimerId: NodeJS.Timeout | null = null;
+  let midnightTimerId: ReturnType<typeof setTimeout> | null = null;
 
   let lastFutureDays = settingsStore.settings.futureDays;
 
@@ -295,40 +296,38 @@
 
     <!-- Разделы с задачами -->
     <div class="grid gap-4 grid-cols-1 xl:grid-cols-3">
-      {#if !isSingleColumn || futureTasks.length > 0}
-        <!-- Будущие задачи -->
-        <Card.Root>
-          <Card.Header>
-            <Card.Title class="flex items-center gap-2">
-              <Clock class="h-5 w-5 text-orange-500" />
-              Будущие задачи
-              <Badge variant="secondary">{futureTasks.length}</Badge>
-              {#if isSingleColumn}
-                <ArrowDown class="h-5 w-5" />
-              {:else}
-                <ArrowRight class="h-5 w-5" />
-              {/if}
-            </Card.Title>
-            <Card.Action>
-              <button
-                onclick={() => (showAllFuture = !showAllFuture)}
-                class={`w-20 ${buttonVariants({ variant: showAllFuture ? "default" : "outline", size: "sm" })}`}
-              >
-                {showAllFuture
-                  ? "Все"
-                  : `${settingsStore.settings.futureDays} дн.`}
-              </button>
-            </Card.Action>
-          </Card.Header>
-          <Card.Content class="px-4">
-            <div class="space-y-2">
-              {#each futureTasks as task (task.id)}
-                <TaskItem {task} />
-              {/each}
-            </div>
-          </Card.Content>
-        </Card.Root>
-      {/if}
+      <!-- Будущие задачи -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="flex items-center gap-2">
+            <Clock class="h-5 w-5 text-orange-500" />
+            Будущие задачи
+            <Badge variant="secondary">{futureTasks.length}</Badge>
+            {#if isSingleColumn}
+              <ArrowDown class="h-5 w-5" />
+            {:else}
+              <ArrowRight class="h-5 w-5" />
+            {/if}
+          </Card.Title>
+          <Card.Action>
+            <button
+              onclick={() => (showAllFuture = !showAllFuture)}
+              class={`w-20 ${buttonVariants({ variant: showAllFuture ? "default" : "outline", size: "sm" })}`}
+            >
+              {showAllFuture
+                ? "Все"
+                : `${settingsStore.settings.futureDays} дн.`}
+            </button>
+          </Card.Action>
+        </Card.Header>
+        <Card.Content class="px-4">
+          <div class="space-y-2">
+            {#each futureTasks as task (task.id)}
+              <TaskItem {task} />
+            {/each}
+          </div>
+        </Card.Content>
+      </Card.Root>
 
       <!-- Задачи на сегодня -->
       <Card.Root>
@@ -411,8 +410,12 @@
   <PasswordModal />
 {/if}
 
-{#if appStateStore.isDeleteConfirmDialogOpen}
-  <DeleteConfirmDialog />
+{#if appStateStore.isDeleteTaskDialogOpen}
+  <DeleteTaskDialog />
+{/if}
+
+{#if appStateStore.isDeleteTemplateDialogOpen}
+  <DeleteTemplateDialog />
 {/if}
 
 {#if appStateStore.isTemplatesListModalOpen}

@@ -55,8 +55,8 @@ if (versionParts[2] >= 100) {
     versionParts[1] += 1;     // Увеличиваем minor
 }
 
-// Если minor стал 100 → переносим в major
-if (versionParts[1] >= 100) {
+// Если minor стал 10 → переносим в major
+if (versionParts[1] >= 10) {
     versionParts[1] = 0;      // Сбрасываем minor
     versionParts[0] += 1;     // Увеличиваем major
 }

@@ -2,9 +2,10 @@
   import { format } from "date-fns"; // Для форматирования дат
   import { ru } from "date-fns/locale"; // Локализация на русский
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js"; // Кнопки
-  import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
+  import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { ColorMap } from "$lib/types/color-map";
   import { taskStore } from "$lib/stores/task-store.svelte";
@@ -93,8 +94,21 @@
   }
 
   // Функция открывает диалог подтверждения удаления задачи
-  function DeleteConfirmDialogOpen() {
-    appStateStore.openDeleteConfirmDialog(task);
+  function DeleteTaskDialogOpen() {
+    if (task.repeatTemplateId && !task.completed) {
+      // Незавершённая повторяющаяся — предлагаем удалить шаблон
+      const template = taskStore.templates.find(
+        (t) => t.id === task.repeatTemplateId,
+      );
+      if (template) {
+        appStateStore.openDeleteTemplateDialog(template);
+      } else {
+        appStateStore.openDeleteTaskDialog(task);
+      }
+    } else {
+      // Выполненная или обычная — удаляем только эту задачу
+      appStateStore.openDeleteTaskDialog(task);
+    }
   }
 </script>
 
@@ -133,7 +147,18 @@
       <!-- Название задачи -->
       <div class="flex items-center gap-2">
         {#if task.repeatTemplateId}
-          <RepeatIcon class="h-4 w-4 text-green-500 flex-shrink-0" />
+          <Tooltip.Provider delayDuration={1300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger
+                ><RepeatIcon
+                  class="h-4 w-4 text-green-500 flex-shrink-0"
+                /></Tooltip.Trigger
+              >
+              <Tooltip.Content>
+                <p>Повторяющаяся задача</p>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         {/if}
         <h3
           class={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
@@ -158,7 +183,18 @@
       <!-- Дата и статусные бейджи -->
       <div class="flex items-center gap-2 pt-1">
         <div class="flex items-center gap-1 text-sm text-muted-foreground">
-          <Calendar class="h-4 w-4" />
+
+          <Tooltip.Provider delayDuration={1300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                <Calendar class="h-4 w-4" />
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                <p>Дата выполнения задачи</p>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+
           {format(taskDate, "d MMMM yyyy", { locale: ru })}
         </div>
 
@@ -213,7 +249,7 @@
           <DropdownMenu.Separator />
 
           <!-- Пункт меню удаления задачи -->
-          <DropdownMenu.Item onclick={DeleteConfirmDialogOpen}>
+          <DropdownMenu.Item onclick={DeleteTaskDialogOpen}>
             <Trash2 class="h-4 w-4 text-red-500" />
             <span>Удалить</span>
           </DropdownMenu.Item>

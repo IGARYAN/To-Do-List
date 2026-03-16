@@ -15,10 +15,12 @@ class AppStateStore {
     // Состояние модальных окон
     isPasswordModalOpen = $state(false);
     isSettingsModalOpen = $state(false);
-    isDeleteConfirmDialogOpen = $state(false);
+    isDeleteTaskDialogOpen = $state(false);
     isTaskModalOpen = $state(false);
     isTemplateModalOpen = $state(false);
     isTemplatesListModalOpen = $state(false);
+    isDeleteTemplateDialogOpen = $state(false);
+    templateToDelete = $state<TypesRepeatTemplate | null>(null);
     templateToEdit = $state<TypesRepeatTemplate | null>(null);
     taskModalMode = $state<'create' | 'edit' | 'createFrom' | 'createTemplate' | 'editTemplate' | null>(null);
 
@@ -94,15 +96,37 @@ class AppStateStore {
         this.selectedColor = undefined;
     }
 
+    /**
+     * Открыть модальное окно создания шаблона
+     */
     openCreateTemplateModal(): void {
         this.taskModalMode = 'createTemplate';
         this.isTaskModalOpen = true;
     }
 
+    /**
+     * Открыть модальное окно редактирования шаблона
+     */
     openEditTemplateModal(template: TypesRepeatTemplate): void {
         this.templateToEdit = template;
         this.taskModalMode = 'editTemplate';
         this.isTaskModalOpen = true;
+    }
+
+    /**
+     * Открыть модальное окно удаления шаблона
+     */
+    openDeleteTemplateDialog(template: TypesRepeatTemplate): void {
+        this.templateToDelete = template;
+        this.isDeleteTemplateDialogOpen = true;
+    }
+
+    /**
+     * Закрыть модальное окно удаления шаблона
+     */
+    closeDeleteTemplateDialog(): void {
+        this.isDeleteTemplateDialogOpen = false;
+        this.templateToDelete = null;
     }
 
     /**
@@ -146,17 +170,17 @@ class AppStateStore {
     /**
      * Открыть диалог подтверждения удаления
      */
-    openDeleteConfirmDialog(task: TypesTask): void {
+    openDeleteTaskDialog(task: TypesTask): void {
         this.taskCreateEditDelete = task;
-        this.isDeleteConfirmDialogOpen = true;
+        this.isDeleteTaskDialogOpen = true;
     }
 
     /**
      * Закрыть диалог подтверждения удаления
      */
-    closeDeleteConfirmDialog(): void {
+    closeDeleteTaskDialog(): void {
         this.taskCreateEditDelete = null;
-        this.isDeleteConfirmDialogOpen = false;
+        this.isDeleteTaskDialogOpen = false;
     }
 
     /**
@@ -171,20 +195,6 @@ class AppStateStore {
      */
     updateTime(): void {
         this.currentTime = new Date();
-    }
-
-    /**
-     * Закрыть все модальные окна и диалоги
-     */
-    closeAll(): void {
-        this.isTaskModalOpen = false;
-        this.isDeleteConfirmDialogOpen = false;
-        this.isSettingsModalOpen = false;
-        this.isPasswordModalOpen = false;
-        this.isTemplateModalOpen = false;
-        this.templateToEdit = null;
-        this.taskCreateEditDelete = null;
-        this.selectedColor = undefined;
     }
 
     // Гетер - Сегодняшняя дата

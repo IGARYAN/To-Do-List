@@ -3,6 +3,7 @@
     import * as Card from "$lib/components/ui/card";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import * as Dialog from "$lib/components/ui/dialog";
+    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
     import { Badge } from "$lib/components/ui/badge";
     import { ColorMap } from "$lib/types/color-map";
     import { taskStore } from "$lib/stores/task-store.svelte";
@@ -14,17 +15,13 @@
         Pencil,
         Trash2,
         Calendar,
-        EllipsisVertical,
         RepeatIcon,
-        PauseCircle,
         PlayCircle,
+        PauseCircle,
+        EllipsisVertical,
     } from "@lucide/svelte";
     import { format } from "date-fns";
     import { ru } from "date-fns/locale";
-
-    // Диалог подтверждения удаления
-    let isDeleteDialogOpen = $state(false);
-    let templateToDelete = $state<TypesRepeatTemplate | null>(null);
 
     // Человекочитаемое описание повторения
     const weekDayNames = ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -75,37 +72,7 @@
 
     // Открыть диалог подтверждения удаления
     function confirmDelete(template: TypesRepeatTemplate) {
-        templateToDelete = template;
-        isDeleteDialogOpen = true;
-    }
-
-    // Удалить только шаблон
-    function deleteTemplateOnly() {
-        if (!templateToDelete) return;
-        taskStore.deleteTemplate(templateToDelete.id, false);
-        toastStore.add({
-            title: "Шаблон удалён",
-            description: `Шаблон "${templateToDelete.title}" удалён. Созданные задачи сохранены.`,
-            variant: "default",
-        });
-        closeDeleteDialog();
-    }
-
-    // Удалить шаблон и будущие задачи
-    function deleteTemplateWithTasks() {
-        if (!templateToDelete) return;
-        taskStore.deleteTemplate(templateToDelete.id, true);
-        toastStore.add({
-            title: "Шаблон удалён",
-            description: `Шаблон "${templateToDelete.title}" и будущие задачи удалены.`,
-            variant: "default",
-        });
-        closeDeleteDialog();
-    }
-
-    function closeDeleteDialog() {
-        isDeleteDialogOpen = false;
-        templateToDelete = null;
+        appStateStore.openDeleteTemplateDialog(template);
     }
 
     // Переключить активность шаблона
@@ -132,14 +99,14 @@
             <Dialog.Title>Повторяющиеся задачи</Dialog.Title>
         </Dialog.Header>
         <!-- Заголовок с кнопкой добавления -->
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <RepeatIcon class="h-5 w-5 text-purple-500" />
-                <h2 class="text-lg font-semibold">Повторяющиеся задачи</h2>
+                <Dialog.Description>Повторяющихся задач</Dialog.Description>
                 <Badge variant="secondary">{taskStore.templates.length}</Badge>
             </div>
             <Button
-                variant="outline"
+                variant="default"
                 size="icon"
                 onclick={() => appStateStore.openCreateTemplateModal()}
             >
@@ -202,7 +169,17 @@
                                 <div
                                     class="flex items-center gap-1 text-sm text-muted-foreground mt-0.5"
                                 >
-                                    <Calendar class="h-4 w-4" />
+                                    <Tooltip.Provider delayDuration={1300}>
+                                        <Tooltip.Root>
+                                            <Tooltip.Trigger
+                                                ><Calendar class="h-4 w-4" />
+                                            </Tooltip.Trigger>
+                                            <Tooltip.Content>
+                                                <p>Дата создания шаблона</p>
+                                            </Tooltip.Content>
+                                        </Tooltip.Root>
+                                    </Tooltip.Provider>
+
                                     {format(
                                         new Date(template.createdAt),
                                         "d MMMM yyyy",
@@ -259,43 +236,5 @@
                 {/each}
             </div>
         {/if}
-
-        <!-- Диалог подтверждения удаления -->
-        <Dialog.Root open={isDeleteDialogOpen} onOpenChange={closeDeleteDialog}>
-            <Dialog.Content class="sm:max-w-md">
-                <Dialog.Header>
-                    <Dialog.Title>Удалить шаблон?</Dialog.Title>
-                </Dialog.Header>
-                <p class="text-sm text-muted-foreground">
-                    Что сделать с задачами созданными из шаблона
-                    <span class="font-medium text-foreground"
-                        >"{templateToDelete?.title}"</span
-                    >?
-                </p>
-                <div class="flex flex-col gap-2 pt-2">
-                    <Button
-                        variant="outline"
-                        onclick={deleteTemplateOnly}
-                        class="w-full"
-                    >
-                        Удалить только шаблон
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onclick={deleteTemplateWithTasks}
-                        class="w-full"
-                    >
-                        Удалить шаблон и будущие задачи
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        onclick={closeDeleteDialog}
-                        class="w-full"
-                    >
-                        Отмена
-                    </Button>
-                </div>
-            </Dialog.Content>
-        </Dialog.Root>
     </Dialog.Content>
 </Dialog.Root>
