@@ -50,7 +50,7 @@ if (versionParts.length !== 3 || versionParts.some(n => isNaN(n))) {
 versionParts[2] += 1;
 
 // Если patch стал 100 → переносим в minor
-if (versionParts[2] >= 100) {
+if (versionParts[2] >= 10) {
     versionParts[2] = 0;      // Сбрасываем patch
     versionParts[1] += 1;     // Увеличиваем minor
 }
