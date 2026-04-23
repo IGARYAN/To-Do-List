@@ -9,13 +9,12 @@
 
 <p align="center">
   <img src="static/screenshots/main-screen.png" alt="Главный экран" width="45%" />
-</p>
-<p align="center">
-  <img src="static/screenshots/settings-screen.png" alt="Настройки" width="45%" />
+  <img src="static/screenshots/main-screen-dark.png" alt="Главный экран" width="45%" />
 </p>
 <p align="center">
   <img src="static/screenshots/task-modal.png" alt="Создание задачи" width="45%" />
   <img src="static/screenshots/theme-screen.png" alt="Тёмная тема" width="45%" />
+  <img src="static/screenshots/settings-screen.png" alt="Настройки" width="45%" />
 </p>
 
 ## ✨ Возможности
