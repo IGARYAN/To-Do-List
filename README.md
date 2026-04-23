@@ -6,8 +6,6 @@
 
 ## 📸 Скриншоты
 
-> *Скриншоты будут добавлены позже. Сделайте их с помощью любого инструмента (например, `Win+Shift+S`) и поместите в папку [`static/screenshots/`](static/screenshots/).*
-
 <p align="center">
   <img src="static/screenshots/main-screen.png" alt="Главный экран" width="45%" />
   <img src="static/screenshots/settings-screen.png" alt="Настройки" width="45%" />
