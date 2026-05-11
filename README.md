@@ -6,7 +6,6 @@
 
 ## 📸 Скриншоты
 
-
 <p align="center">
   <img src="static/screenshots/main-screen.png" alt="Главный экран" width="45%" />
   <img src="static/screenshots/main-screen-dark.png" alt="Главный экран" width="45%" />
