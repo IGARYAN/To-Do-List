@@ -1,6 +1,6 @@
 [package]
 name = "todo-app-svelte"
-version = "0.2.3"
+version = "0.2.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
