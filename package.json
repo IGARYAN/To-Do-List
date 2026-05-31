@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
     "tauri": "tauri",
     "tauri:build": "node scripts/update-version.js && tauri build",
     "tauri:dev": "node scripts/update-version.js && tauri dev"
@@ -43,6 +45,7 @@
     "tailwind-variants": "^3.2.2",
     "tw-animate-css": "^1.3.5",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3"
+    "vite": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }

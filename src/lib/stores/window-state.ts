@@ -1,7 +1,7 @@
 import {
     getCurrentWindow,
-    LogicalSize,
-    LogicalPosition,
+    PhysicalSize,
+    PhysicalPosition,
     currentMonitor,
     primaryMonitor,
 } from "@tauri-apps/api/window";
@@ -10,8 +10,9 @@ import type { WindowState, DisplayInfo } from "$lib/types/types-settings";
 
 const appWindow = getCurrentWindow();
 
-// Допустимая погрешность при сравнении scaleFactor (float)
-const SCALE_FACTOR_EPSILON = 0.01;
+// Минимальная видимая часть окна (в физических пикселях), чтобы
+// окно не оказалось полностью за пределами экрана после восстановления
+const MIN_VISIBLE_MARGIN = 50;
 
 /**
  * Вспомогательная функция: получает текущие параметры дисплея
@@ -128,6 +129,15 @@ export async function saveWindow() {
  * 2. Сохранённые параметры дисплея совпадают с текущими
  *    (разрешение, масштаб, монитор)
  *
+ * ВАЖНО: saveWindow() сохраняет физические пиксели (PhysicalPosition/PhysicalSize
+ * от outerPosition/innerSize). restoreWindow() восстанавливает через
+ * PhysicalPosition/PhysicalSize, чтобы избежать двойного масштабирования:
+ * - LogicalPosition(x, y) при scaleFactor!=1 даёт физический OFFSET = x*scaleFactor
+ * - PhysicalPosition(x, y) даёт ТОЧНО такой же физический пиксель, как был сохранён
+ *
+ * После восстановления координаты/размеры проверяются на выход за границы
+ * текущего монитора (clamp), чтобы окно не оказалось невидимым.
+ *
  * Если параметры не совпадают — окно остаётся в стандартном
  * размещении (центр экрана, размеры по умолчанию из tauri.conf.json),
  * а причина отказа логируется.
@@ -168,18 +178,18 @@ export async function restoreWindow() {
         }
 
         // === Проверка 2: совпадает ли масштаб (DPI) ===
-        const scaleDiff = Math.abs(saved.scaleFactor - currentDisplay.scaleFactor);
-        if (scaleDiff > SCALE_FACTOR_EPSILON) {
-            console.warn(
-                "[restoreWindow] ⚠️ Масштаб (DPI) изменился — состояние окна НЕ восстановлено.",
-                {
-                    saved: saved.scaleFactor,
-                    current: currentDisplay.scaleFactor,
-                    diff: scaleDiff,
-                }
+        // Сохраняем и восстанавливаем в физических пикселях, поэтому
+        // при scaleFactor-отличиях конвертация Logical→Physical НЕ делается.
+        // Если scaleFactor отличается — это нормально, т.к. физические пиксели
+        // инвариантны к масштабу (монитор имеет фиксированное физическое разрешение).
+        // Единственное условие — физическое разрешение экрана должно совпадать,
+        // иначе сохранённые координаты могут указывать на несуществующую область.
+        if (Math.abs(saved.scaleFactor - currentDisplay.scaleFactor) > 0.01) {
+            console.log(
+                "[restoreWindow] Масштаб (DPI) изменился:",
+                { saved: saved.scaleFactor, current: currentDisplay.scaleFactor }
             );
-            console.log("[restoreWindow] Окно будет показано в центре с размерами по умолчанию");
-            return;
+            // Размеры НЕ корректируем — они в физических пикселях и не зависят от DPI
         }
 
         // === Проверка 3: существует ли сохранённый монитор ===
@@ -203,14 +213,60 @@ export async function restoreWindow() {
             console.log("[restoreWindow] Восстановление: максимизация окна");
             await appWindow.maximize();
         } else {
-            console.log("[restoreWindow] Восстановление: позиция и размеры", {
-                x: saved.x,
-                y: saved.y,
-                width: saved.width,
-                height: saved.height,
+            // Clamp: проверяем, что хотя бы MIN_VISIBLE_MARGIN пикселей окна
+            // видимо на экране. Если окно выходит за границы — центрируем его.
+            const displayW = currentDisplay.displayWidth;
+            const displayH = currentDisplay.displayHeight;
+
+            // Сначала рассчитываем позицию
+            let windowX = saved.x;
+            let windowY = saved.y;
+            let windowW = saved.width;
+            let windowH = saved.height;
+
+            // Если окно полностью за пределами видимой области слева/сверху
+            if (windowX + windowW < MIN_VISIBLE_MARGIN) {
+                console.log("[restoreWindow] Окно выходит за левую границу, центрируем по X");
+                windowX = Math.round((displayW - windowW) / 2);
+            }
+            if (windowY + windowH < MIN_VISIBLE_MARGIN) {
+                console.log("[restoreWindow] Окно выходит за верхнюю границу, центрируем по Y");
+                windowY = Math.round((displayH - windowH) / 2);
+            }
+
+            // Если окно шире экрана — уменьшаем с отступом
+            if (windowW > displayW - MIN_VISIBLE_MARGIN) {
+                console.log("[restoreWindow] Окно шире экрана, уменьшаем ширину");
+                windowW = displayW - MIN_VISIBLE_MARGIN;
+                windowX = Math.round((displayW - windowW) / 2);
+            }
+            if (windowH > displayH - MIN_VISIBLE_MARGIN) {
+                console.log("[restoreWindow] Окно выше экрана, уменьшаем высоту");
+                windowH = displayH - MIN_VISIBLE_MARGIN;
+                windowY = Math.round((displayH - windowH) / 2);
+            }
+
+            // Если окно уходит за правую/нижнюю границу — сдвигаем
+            if (windowX + windowW > displayW) {
+                console.log("[restoreWindow] Окно выходит за правую границу, корректируем X");
+                windowX = displayW - windowW;
+            }
+            if (windowY + windowH > displayH) {
+                console.log("[restoreWindow] Окно выходит за нижнюю границу, корректируем Y");
+                windowY = displayH - windowH;
+            }
+
+            console.log("[restoreWindow] Восстановление: позиция и размеры (физические пиксели)", {
+                x: windowX,
+                y: windowY,
+                width: windowW,
+                height: windowH,
             });
-            await appWindow.setPosition(new LogicalPosition(saved.x, saved.y));
-            await appWindow.setSize(new LogicalSize(saved.width, saved.height));
+
+            // Используем PhysicalPosition/PhysicalSize, чтобы НЕ было
+            // двойного масштабирования (saved значения уже в физических пикселях)
+            await appWindow.setPosition(new PhysicalPosition(windowX, windowY));
+            await appWindow.setSize(new PhysicalSize(windowW, windowH));
         }
 
         console.log("[restoreWindow] ✅ Состояние окна успешно восстановлено");
