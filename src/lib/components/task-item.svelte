@@ -19,6 +19,7 @@
     RepeatIcon,
     CircleCheckBig,
     EllipsisVertical,
+    ArrowRight,
   } from "@lucide/svelte"; // Иконки
 
   let { task } = $props();
@@ -73,6 +74,15 @@
     taskDate.getTime() === appStateStore.tomorrow.getTime(),
   );
 
+  /*
+    Выполнена с просрочкой: задача выполнена, но дата выполнения (completedAt) позднее назначенной даты (date)
+  */
+  const isCompletedOverdue = $derived(
+    task.completed &&
+    task.completedAt &&
+    new Date(task.completedAt).setHours(0, 0, 0, 0) > taskDate.getTime()
+  );
+
   // Функция открывает диалог редактирования задачи
   function EditTaskModalOpen() {
     if (task.repeatTemplateId) {
@@ -114,7 +124,8 @@
 
 <Card.Root
   class={`flex px-2 py-2 transition-all duration-300 hover:shadow-md dark:hover:shadow-white/10 
-  ${isOverdue ? "border-red-300 dark:border-red-900" : ""}`}
+  ${isOverdue ? "border-red-300 dark:border-red-900" : ""}
+  ${isCompletedOverdue ? "border-orange-300 dark:border-orange-900" : ""}`}
 >
   <div class="flex items-stretch gap-3 h-full">
     <div class="flex items-center">
@@ -183,19 +194,48 @@
       <!-- Дата и статусные бейджи -->
       <div class="flex items-center gap-2 pt-1">
         <div class="flex items-center gap-1 text-sm text-muted-foreground">
+          {#if task.completed && task.completedAt && isCompletedOverdue}
+            <!-- Планировалось на -->
+            <Tooltip.Provider delayDuration={1300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  <Calendar class="h-4 w-4" />
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p>Планировалось на</p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+            {format(taskDate, "d MMMM yyyy", { locale: ru })}
 
-          <Tooltip.Provider delayDuration={1300}>
-            <Tooltip.Root>
-              <Tooltip.Trigger>
-                <Calendar class="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content>
-                <p>Дата выполнения задачи</p>
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+            <!-- Стрелочка -->
+            <ArrowRight class="h-4 w-4" />
 
-          {format(taskDate, "d MMMM yyyy", { locale: ru })}
+            <!-- Фактическая дата выполнения -->
+            <Tooltip.Provider delayDuration={1300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  <CircleCheckBig class="h-4 w-4" />
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p>Выполнено</p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+            {format(new Date(task.completedAt), "d MMMM yyyy", { locale: ru })}
+          {:else}
+            <Tooltip.Provider delayDuration={1300}>
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  <Calendar class="h-4 w-4" />
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p>Дата выполнения задачи</p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+            {format(taskDate, "d MMMM yyyy", { locale: ru })}
+          {/if}
         </div>
 
         <!-- Бейдж "Сегодня" -->

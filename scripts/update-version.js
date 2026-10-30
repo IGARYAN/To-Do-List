@@ -1,5 +1,8 @@
 /**
  * update-version.js — ESM-версия
+ * Добавить в package.json
+ * "tauri:build": "node scripts/update-version.js && tauri build",
+ * "tauri:dev": "node scripts/update-version.js && tauri dev"
  * Скрипт автоматически увеличивает версию формата major.minor.patch.
  * При достижении значения 100 происходит перенос:
  *   patch → minor
@@ -81,16 +84,16 @@ console.log(`Заголовок окна: ${config.app.windows[0].title}`);
 // ------------------------------------------------------
 
 // Путь к Cargo.toml
-const cargoPath = join(__dirname, '..', 'src-tauri', 'Cargo.toml');
+// const cargoPath = join(__dirname, '..', 'src-tauri', 'Cargo.toml');
 
 // Читаем Cargo.toml как текст
-let cargo = readFileSync(cargoPath, 'utf-8');
+// let cargo = readFileSync(cargoPath, 'utf-8');
 
 // Заменяем строку версии формата:
 // version = "X.X.X"
-cargo = cargo.replace(/^version\s*=\s*".*"/m, `version = "${newVersion}"`);
+// cargo = cargo.replace(/^version\s*=\s*".*"/m, `version = "${newVersion}"`);
 
 // Сохраняем обновлённый файл
-writeFileSync(cargoPath, cargo, 'utf-8');
+// writeFileSync(cargoPath, cargo, 'utf-8');
 
-console.log('Cargo.toml обновлён');
+// console.log('Cargo.toml обновлён');
