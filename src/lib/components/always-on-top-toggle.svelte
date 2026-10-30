@@ -29,26 +29,24 @@
     }
 </script>
 
-<Tooltip.Provider delayDuration={1000}>
-    <Tooltip.Root>
-        <Tooltip.Trigger
-            onclick={toggleAlwaysOnTop}
-            class={`transition-all duration-300 ${
-                settingsStore.settings.alwaysOnTop
-                    ? buttonVariants({ variant: "default", size: "icon" })
-                    : buttonVariants({ variant: "outline", size: "icon" })
-            }`}
-        >
-            {#if settingsStore.settings.alwaysOnTop}
-                <Pin class="h-4 w-4" />
-            {:else}
-                <PinOff class="h-4 w-4" />
-            {/if}
-        </Tooltip.Trigger>
-        <Tooltip.Content side="top">
-            <p>
-                Поверх всех окон
-            </p>
-        </Tooltip.Content>
-    </Tooltip.Root>
-</Tooltip.Provider>
+<Tooltip.Root>
+    <Tooltip.Trigger
+        onclick={toggleAlwaysOnTop}
+        class={`transition-all duration-300 ${
+            settingsStore.settings.alwaysOnTop
+                ? buttonVariants({ variant: "default", size: "icon" })
+                : buttonVariants({ variant: "outline", size: "icon" })
+        }`}
+    >
+        {#if settingsStore.settings.alwaysOnTop}
+            <Pin class="h-4 w-4" />
+        {:else}
+            <PinOff class="h-4 w-4" />
+        {/if}
+    </Tooltip.Trigger>
+    <Tooltip.Content side="top">
+        <p>
+            Поверх всех окон
+        </p>
+    </Tooltip.Content>
+</Tooltip.Root>

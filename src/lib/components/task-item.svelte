@@ -158,18 +158,16 @@
       <!-- Название задачи -->
       <div class="flex items-center gap-2">
         {#if task.repeatTemplateId}
-          <Tooltip.Provider delayDuration={1300}>
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                ><RepeatIcon
-                  class="h-4 w-4 text-green-500 flex-shrink-0"
-                /></Tooltip.Trigger
-              >
-              <Tooltip.Content>
-                <p>Повторяющаяся задача</p>
-              </Tooltip.Content>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger
+              ><RepeatIcon
+                class="h-4 w-4 text-green-500 flex-shrink-0"
+              /></Tooltip.Trigger
+            >
+            <Tooltip.Content>
+              <p>Повторяющаяся задача</p>
+            </Tooltip.Content>
+          </Tooltip.Root>
         {/if}
         <h3
           class={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
@@ -196,44 +194,38 @@
         <div class="flex items-center gap-1 text-sm text-muted-foreground">
           {#if task.completed && task.completedAt && isCompletedOverdue}
             <!-- Планировалось на -->
-            <Tooltip.Provider delayDuration={1300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  <Calendar class="h-4 w-4" />
-                </Tooltip.Trigger>
-                <Tooltip.Content>
-                  <p>Планировалось на</p>
-                </Tooltip.Content>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                <Calendar class="h-4 w-4" />
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                <p>Планировалось на</p>
+              </Tooltip.Content>
+            </Tooltip.Root>
             {format(taskDate, "d MMMM yyyy", { locale: ru })}
 
             <!-- Стрелочка -->
             <ArrowRight class="h-4 w-4" />
 
             <!-- Фактическая дата выполнения -->
-            <Tooltip.Provider delayDuration={1300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  <CircleCheckBig class="h-4 w-4" />
-                </Tooltip.Trigger>
-                <Tooltip.Content>
-                  <p>Выполнено</p>
-                </Tooltip.Content>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                <CircleCheckBig class="h-4 w-4" />
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                <p>Выполнено</p>
+              </Tooltip.Content>
+            </Tooltip.Root>
             {format(new Date(task.completedAt), "d MMMM yyyy", { locale: ru })}
           {:else}
-            <Tooltip.Provider delayDuration={1300}>
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  <Calendar class="h-4 w-4" />
-                </Tooltip.Trigger>
-                <Tooltip.Content>
-                  <p>Дата выполнения задачи</p>
-                </Tooltip.Content>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                <Calendar class="h-4 w-4" />
+              </Tooltip.Trigger>
+              <Tooltip.Content>
+                <p>Дата выполнения задачи</p>
+              </Tooltip.Content>
+            </Tooltip.Root>
             {format(taskDate, "d MMMM yyyy", { locale: ru })}
           {/if}
         </div>

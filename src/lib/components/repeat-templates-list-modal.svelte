@@ -169,16 +169,14 @@
                                 <div
                                     class="flex items-center gap-1 text-sm text-muted-foreground mt-0.5"
                                 >
-                                    <Tooltip.Provider delayDuration={1300}>
-                                        <Tooltip.Root>
-                                            <Tooltip.Trigger
-                                                ><Calendar class="h-4 w-4" />
-                                            </Tooltip.Trigger>
-                                            <Tooltip.Content>
-                                                <p>Дата создания шаблона</p>
-                                            </Tooltip.Content>
-                                        </Tooltip.Root>
-                                    </Tooltip.Provider>
+                                    <Tooltip.Root>
+                                        <Tooltip.Trigger
+                                            ><Calendar class="h-4 w-4" />
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content>
+                                            <p>Дата создания шаблона</p>
+                                        </Tooltip.Content>
+                                    </Tooltip.Root>
 
                                     {format(
                                         new Date(template.createdAt),

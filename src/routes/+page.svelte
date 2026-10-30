@@ -237,52 +237,46 @@
       <!-- Панель управления -->
       <div class="flex items-center gap-2">
         <!-- Кнопка создать задачу -->
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => appStateStore.openCreateTaskModal()}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
-            >
-              <Plus class="h-4 w-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content>
-              <p>Создать задачу</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            onclick={() => appStateStore.openCreateTaskModal()}
+            class={`transition-all duration-300 ${buttonVariants({ variant: "default", size: "icon" })}`}
+          >
+            <Plus class="h-4 w-4" />
+          </Tooltip.Trigger>
+          <Tooltip.Content>
+            <p>Создать задачу</p>
+          </Tooltip.Content>
+        </Tooltip.Root>
 
         <!-- Кнопка повторяющихся задач -->
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => appStateStore.openTemplatesListModal()}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
-            >
-              <RepeatIcon class="h-4 w-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content>
-              <p>Повторяющиеся задачи</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            onclick={() => appStateStore.openTemplatesListModal()}
+            class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
+          >
+            <RepeatIcon class="h-4 w-4" />
+          </Tooltip.Trigger>
+          <Tooltip.Content>
+            <p>Повторяющиеся задачи</p>
+          </Tooltip.Content>
+        </Tooltip.Root>
 
         <ThemeToggle />
         <AlwaysOnTop />
 
         <!-- Кнопка настроек -->
-        <Tooltip.Provider delayDuration={1000}>
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              onclick={() => appStateStore.openSettingsModal()}
-              class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
-            >
-              <Settings class="h-4 w-4" />
-            </Tooltip.Trigger>
-            <Tooltip.Content>
-              <p>Настройки</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            onclick={() => appStateStore.openSettingsModal()}
+            class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "icon" })}`}
+          >
+            <Settings class="h-4 w-4" />
+          </Tooltip.Trigger>
+          <Tooltip.Content>
+            <p>Настройки</p>
+          </Tooltip.Content>
+        </Tooltip.Root>
       </div>
     </div>
 
