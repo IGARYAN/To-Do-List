@@ -276,7 +276,7 @@
       <div class="flex items-center gap-2">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
-            class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "default" })} flex items-center gap-2`}
+            class={`transition-all duration-300 ${buttonVariants({ variant: "outline", size: "sm" })} flex items-center gap-2`}
           >
             <Menu class="h-4 w-4" />
             <span>Меню</span>
