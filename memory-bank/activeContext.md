@@ -17,3 +17,10 @@
   - Оранжевая рамка (`border-orange-300 dark:border-orange-900`) для визуального выделения выполненных с просрочкой
   - Отображение даты назначения и фактической даты выполнения через стрелку (`ArrowRight`) для наглядного сравнения
   - Использованы существующие поля `date` и `completedAt` без изменений структуры данных
+- **2026-10-30**: Решена проблема с Tooltip и упрощен интерфейс:
+  - Удалены компоненты `theme-toggle.svelte` и `always-on-top-toggle.svelte`
+  - Заменены отдельные кнопки на единое выпадающее меню с иконкой Menu в `+page.svelte`
+  - Интегрированы функции переключения темы и режима "Поверх всех окон" напрямую в dropdown меню
+  - Удалены все Tooltip из проекта (task-item.svelte, repeat-templates-list-modal.svelte)
+  - Удален Tooltip.Provider из +layout.svelte
+  - Используется style программирования через stores: `themeStore.set()` и `settingsStore.set()`

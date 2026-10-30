@@ -5,7 +5,6 @@
   import { Badge } from "$lib/components/ui/badge/index.js"; // Бейджи статусов
   import * as Card from "$lib/components/ui/card/index.js"; // Карточка для задачи
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { toastStore } from "$lib/stores/toast-store"; // Уведомления
   import { ColorMap } from "$lib/types/color-map";
   import { taskStore } from "$lib/stores/task-store.svelte";
@@ -158,16 +157,7 @@
       <!-- Название задачи -->
       <div class="flex items-center gap-2">
         {#if task.repeatTemplateId}
-          <Tooltip.Root>
-            <Tooltip.Trigger
-              ><RepeatIcon
-                class="h-4 w-4 text-green-500 flex-shrink-0"
-              /></Tooltip.Trigger
-            >
-            <Tooltip.Content>
-              <p>Повторяющаяся задача</p>
-            </Tooltip.Content>
-          </Tooltip.Root>
+          <RepeatIcon class="h-4 w-4 text-green-500 flex-shrink-0" />
         {/if}
         <h3
           class={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
@@ -194,38 +184,17 @@
         <div class="flex items-center gap-1 text-sm text-muted-foreground">
           {#if task.completed && task.completedAt && isCompletedOverdue}
             <!-- Планировалось на -->
-            <Tooltip.Root>
-              <Tooltip.Trigger>
-                <Calendar class="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content>
-                <p>Планировалось на</p>
-              </Tooltip.Content>
-            </Tooltip.Root>
+            <Calendar class="h-4 w-4" />
             {format(taskDate, "d MMMM yyyy", { locale: ru })}
 
             <!-- Стрелочка -->
             <ArrowRight class="h-4 w-4" />
 
             <!-- Фактическая дата выполнения -->
-            <Tooltip.Root>
-              <Tooltip.Trigger>
-                <CircleCheckBig class="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content>
-                <p>Выполнено</p>
-              </Tooltip.Content>
-            </Tooltip.Root>
+            <CircleCheckBig class="h-4 w-4" />
             {format(new Date(task.completedAt), "d MMMM yyyy", { locale: ru })}
           {:else}
-            <Tooltip.Root>
-              <Tooltip.Trigger>
-                <Calendar class="h-4 w-4" />
-              </Tooltip.Trigger>
-              <Tooltip.Content>
-                <p>Дата выполнения задачи</p>
-              </Tooltip.Content>
-            </Tooltip.Root>
+            <Calendar class="h-4 w-4" />
             {format(taskDate, "d MMMM yyyy", { locale: ru })}
           {/if}
         </div>

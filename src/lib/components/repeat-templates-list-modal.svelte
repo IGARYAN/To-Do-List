@@ -3,7 +3,6 @@
     import * as Card from "$lib/components/ui/card";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import * as Dialog from "$lib/components/ui/dialog";
-    import * as Tooltip from "$lib/components/ui/tooltip/index.js";
     import { Badge } from "$lib/components/ui/badge";
     import { ColorMap } from "$lib/types/color-map";
     import { taskStore } from "$lib/stores/task-store.svelte";
@@ -169,14 +168,7 @@
                                 <div
                                     class="flex items-center gap-1 text-sm text-muted-foreground mt-0.5"
                                 >
-                                    <Tooltip.Root>
-                                        <Tooltip.Trigger
-                                            ><Calendar class="h-4 w-4" />
-                                        </Tooltip.Trigger>
-                                        <Tooltip.Content>
-                                            <p>Дата создания шаблона</p>
-                                        </Tooltip.Content>
-                                    </Tooltip.Root>
+                                    <Calendar class="h-4 w-4" />
 
                                     {format(
                                         new Date(template.createdAt),

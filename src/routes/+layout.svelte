@@ -10,7 +10,6 @@
   import { taskStore } from "$lib/stores/task-store.svelte";
   import { generateTasksFromTemplates } from "$lib/services/repeat-service";
   import { goto } from "$app/navigation";
-  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
 
   // Блокируем системное контекстное меню
   window.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -154,8 +153,6 @@
   console.log("[Layout] Инициализирован snippet children:", !!children);
 </script>
 
-<Tooltip.Provider delayDuration={1000}>
-  {@render children?.()}
-</Tooltip.Provider>
+{@render children?.()}
 
 <Toaster />
