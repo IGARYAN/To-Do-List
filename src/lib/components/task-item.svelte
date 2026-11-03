@@ -104,8 +104,8 @@
 
   // Функция открывает диалог подтверждения удаления задачи
   function DeleteTaskDialogOpen() {
-    if (task.repeatTemplateId && !task.completed) {
-      // Незавершённая повторяющаяся — предлагаем удалить шаблон
+    if (task.repeatTemplateId && !task.completed && !isOverdue) {
+      // Незавершённая НЕпросроченная повторяющаяся — предлагаем удалить шаблон
       const template = taskStore.templates.find(
         (t) => t.id === task.repeatTemplateId,
       );
@@ -115,7 +115,7 @@
         appStateStore.openDeleteTaskDialog(task);
       }
     } else {
-      // Выполненная или обычная — удаляем только эту задачу
+      // Выполненная, обычная ИЛИ ПРОСРОЧЕННАЯ повторяющаяся — удаляем только эту задачу
       appStateStore.openDeleteTaskDialog(task);
     }
   }
